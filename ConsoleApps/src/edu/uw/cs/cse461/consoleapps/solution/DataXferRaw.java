@@ -9,13 +9,19 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import edu.uw.cs.cse461.consoleapps.DataXferInterface.DataXferRawInterface;
 import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableConsoleApp;
 import edu.uw.cs.cse461.service.DataXferRawService;
 import edu.uw.cs.cse461.service.DataXferServiceBase;
+import edu.uw.cs.cse461.service.EchoServiceBase;
 import edu.uw.cs.cse461.util.ConfigManager;
+import edu.uw.cs.cse461.util.SampledStatistic.ElapsedTime;
 import edu.uw.cs.cse461.util.SampledStatistic.TransferRate;
 import edu.uw.cs.cse461.util.SampledStatistic.TransferRateInterval;
 
@@ -116,11 +122,43 @@ public class DataXferRaw extends NetLoadableConsoleApp implements DataXferRawInt
 	 * @param hostIP  Destination IP address
 	 * @param udpPort Destination port
 	 * @param socketTimeout how long to wait for response before giving up
-	 * @param xferLength The number of data bytes each response packet should carry
+	 * @param xferLength The number of total data bytes
 	 */
 	@Override
 	public byte[] udpDataXfer(byte[] header, String hostIP, int udpPort, int socketTimeout, int xferLength) throws IOException {
-		return null;
+		DatagramSocket socket;
+		int dataLength = 0; // keep track of the total received data length
+		byte[] receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength];
+		ByteBuffer totalBuf = ByteBuffer.wrap(receiveBuf);
+		socket = new DatagramSocket();
+		socket.setSoTimeout(socketTimeout);
+		DatagramPacket packet = new DatagramPacket(header, header.length, new InetSocketAddress(hostIP, udpPort));
+		socket.send(packet);
+
+		// keep receiving packets until the payload size matched with the expected xferLength
+		while(dataLength < xferLength){
+			receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length() + 1000];
+			DatagramPacket receivePacket = new DatagramPacket(receiveBuf, receiveBuf.length);
+			socket.receive(receivePacket);
+			totalBuf.put(Arrays.copyOfRange(receiveBuf, 4, receiveBuf.length - 1));
+			dataLength += receivePacket.getLength() - 4;
+			
+			if ((dataLength+xferLength < header.length) && (receivePacket.getLength() != EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength)){
+				TransferRate.abort("udp", xferLength);
+				socket.close();
+				System.out.println("Bad response: sent "+ header.length + " bytes but got back "+ receivePacket.getLength());
+			}
+
+			String rcvdHeader = new String(receiveBuf, 0, 4);
+			if (!rcvdHeader.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
+				TransferRate.abort("udp", xferLength);
+				socket.close();
+				System.out.println("Bad returned header: got '" + rcvdHeader + "' but wanted '" + EchoServiceBase.RESPONSE_OKAY_STR);
+			}
+		}
+		socket.close();
+		//System.out.println(totalBuf.toString());
+		return totalBuf.array(); 
 	}
 	
 	/**
@@ -155,7 +193,43 @@ public class DataXferRaw extends NetLoadableConsoleApp implements DataXferRawInt
 	 */
 	@Override
 	public byte[] tcpDataXfer(byte[] header, String hostIP, int tcpPort, int socketTimeout, int xferLength) throws IOException {
-		return null;
+		Socket tcpSocket;
+		tcpSocket = new Socket(hostIP, tcpPort);
+		tcpSocket.setSoTimeout(socketTimeout);
+		InputStream is = tcpSocket.getInputStream();
+		OutputStream os = tcpSocket.getOutputStream();
+		int dataLength = 0; // keep track of the total received data length
+		
+		// send header
+		os.write(header);
+		tcpSocket.shutdownOutput();
+
+		byte[] receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength];
+		ByteBuffer totalBuf = ByteBuffer.wrap(receiveBuf);
+		int len = is.read(receiveBuf);
+		totalBuf.put(receiveBuf);
+		dataLength += len;
+		
+		String headerStr = new String(receiveBuf, 0, 4);
+		if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
+			TransferRate.abort("tcp", xferLength);
+			System.out.println("Bad response header: got '" + headerStr + "' but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
+		
+		} else {
+			while(len != -1 && dataLength < (EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength)){
+				len = is.read(receiveBuf);
+				if (len != -1){
+					dataLength += len;
+				}else{
+					TransferRate.abort("tcp", xferLength);
+					System.out.println("Bad response: got " + dataLength + " data but expected " + xferLength + " data.");
+				}
+			}
+			
+		}
+		tcpSocket.close();
+		//System.out.println(totalBuf.toString());
+		return totalBuf.array();
 	}
 	
 	/**

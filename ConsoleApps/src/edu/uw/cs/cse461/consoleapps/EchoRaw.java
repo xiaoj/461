@@ -95,6 +95,7 @@ public class EchoRaw extends NetLoadableConsoleApp {
 						if ( dataLength > 1400 )
 							throw new Exception("Data is too long for UDP echo");
 						byte[] buf = new byte[dataLength];
+						
 						ByteBuffer bufBB = ByteBuffer.wrap(buf);
 						bufBB.put(EchoServiceBase.HEADER_BYTES).put(msg.getBytes());
 						DatagramPacket packet = new DatagramPacket(buf, buf.length, new InetSocketAddress(targetIP, targetUDPPort));
@@ -106,11 +107,16 @@ public class EchoRaw extends NetLoadableConsoleApp {
 						DatagramPacket receivePacket = new DatagramPacket(receiveBuf, receiveBuf.length);
 						try { 
 							socket.receive(receivePacket);
-							if ( receivePacket.getLength() != buf.length )
+							if ( receivePacket.getLength() != buf.length ){
+								socket.close();
 								throw new Exception("Bad response: sent " + buf.length + " bytes but got back " + receivePacket.getLength());
+							}
+								
 							String rcvdHeader = new String(receiveBuf,0,4);
-							if ( !rcvdHeader.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR) ) 
+							if ( !rcvdHeader.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR) ){
+								socket.close();
 								throw new Exception("Bad returned header: got '" + rcvdHeader + "' but wanted '" + EchoServiceBase.RESPONSE_OKAY_STR);
+							}
 							String response = new String(receiveBuf, 4, receivePacket.getLength()-4);
 							System.out.println("UDP: '" + response + "'");
 						} catch (SocketTimeoutException e) {
@@ -139,12 +145,15 @@ public class EchoRaw extends NetLoadableConsoleApp {
 						// (mistakenly) reject it.
 						byte[] headerBuf = new byte[EchoServiceBase.HEADER_LEN];
 						int len = is.read(headerBuf);
-						if ( len != EchoServiceBase.HEADER_LEN )
+						if ( len != EchoServiceBase.HEADER_LEN ){
+							tcpSocket.close();
 							throw new Exception("Bad response header length: got " + len + " but expected " + EchoServiceBase.HEADER_LEN);
+						}
 						String headerStr = new String(headerBuf);
-						if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR))
+						if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
+							tcpSocket.close();
 							throw new Exception("Bad response header: got '" + headerStr + "' but expected '" + EchoServiceBase.HEADER_STR + "'");
-						
+						}
 						// read the payload.  We don't attempt to verify that the payload is what we sent
 						byte[] buf = new byte[msgBytes.length];
 						System.out.print("TCP: '");

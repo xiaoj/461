@@ -1,6 +1,7 @@
 package edu.uw.cs.cse461.consoleapps.solution;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -8,6 +9,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 import edu.uw.cs.cse461.consoleapps.PingInterface.PingRawInterface;
 import edu.uw.cs.cse461.net.base.NetBase;
@@ -106,15 +111,129 @@ public class PingRaw extends NetLoadableConsoleApp implements PingRawInterface {
 	 */
 	@Override
 	public ElapsedTimeInterval udpPing(byte[] header, String hostIP, int udpPort, int socketTimeout, int nTrials) {
-		ElapsedTime.start("PingRaw_UDPTotalDelay");
-		ElapsedTime.stop("PingRaw_UDPTotalDelay");
+
+		DatagramSocket socket;
+		try {
+			for (int i = 0; i < nTrials; i++) {
+				socket = new DatagramSocket();
+				socket.setSoTimeout(socketTimeout);
+				DatagramPacket packet = new DatagramPacket(header, header.length, new InetSocketAddress(hostIP, udpPort));
+
+				try {
+					ElapsedTime.start("PingRaw_UDPTotalDelay");
+					socket.send(packet);
+					byte[] receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length()];
+					DatagramPacket receivePacket = new DatagramPacket(receiveBuf, receiveBuf.length);
+					socket.receive(receivePacket);
+					if (receivePacket.getLength() != EchoServiceBase.RESPONSE_OKAY_STR.length()){
+						ElapsedTime.abort("PingRaw_UDPTotalDelay");
+						System.out.println("Bad response: sent "+ header.length + " bytes but got back "+ receivePacket.getLength());
+					}
+					String rcvdHeader = new String(receiveBuf, 0, 4);
+					if (!rcvdHeader.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
+						ElapsedTime.abort("PingRaw_UDPTotalDelay");
+						System.out.println("Bad returned header: got '" + rcvdHeader + "' but wanted '" + EchoServiceBase.RESPONSE_OKAY_STR);
+					}
+					ElapsedTime.stop("PingRaw_UDPTotalDelay");	
+				} catch (SocketTimeoutException e) {
+					// This exception is thrown if we wait on receive() longer
+					// than the timeout
+					ElapsedTime.abort("PingRaw_UDPTotalDelay");
+					//System.out.println("UDP socket timeout");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					ElapsedTime.abort("PingRaw_UDPTotalDelay");
+					e.printStackTrace();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					ElapsedTime.abort("PingRaw_UDPTotalDelay");
+					e.printStackTrace();
+				}
+				socket.close();
+				socket = null;
+			}
+			
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		return ElapsedTime.get("PingRaw_UDPTotalDelay");
 	}
 	
 	@Override
 	public ElapsedTimeInterval tcpPing(byte[] header, String hostIP, int tcpPort, int socketTimeout, int nTrials) {
-		ElapsedTime.start("PingRaw_TCPTotal");
-		ElapsedTime.stop("PingRaw_TCPTotal");
-		return ElapsedTime.get("PingRaw_TCPTotal");
+		Socket tcpSocket;
+		try {
+			for (int i = 0; i < nTrials; i++){
+				tcpSocket = new Socket(hostIP, tcpPort);
+				tcpSocket.setSoTimeout(socketTimeout);
+				InputStream is = tcpSocket.getInputStream();
+				OutputStream os = tcpSocket.getOutputStream();
+				
+				try {
+					ElapsedTime.start("PingRaw_TCPTotalDelay");
+					// send header
+					os.write(header);
+					tcpSocket.shutdownOutput();
+					// read the header.  Either the entire header arrives in one chunk, or we
+					// (mistakenly) reject it.
+					byte[] headerBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length()];
+					int len = is.read(headerBuf);
+					if ( len == -1 ){
+						ElapsedTime.abort("PingRaw_TCPTotalDelay");
+					} else if ( len != EchoServiceBase.RESPONSE_OKAY_STR.length() ){
+						ElapsedTime.abort("PingRaw_TCPTotalDelay");
+						System.out.println("Bad response header length: got " + len + " but expected " + EchoServiceBase.RESPONSE_OKAY_STR.length());
+					} else {
+						String headerStr = new String(headerBuf, 0, 4);
+						if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
+							ElapsedTime.abort("PingRaw_TCPTotalDelay");
+							System.out.println("Bad response header: got '" + headerStr + "' but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
+						}
+						ElapsedTime.stop("PingRaw_TCPTotalDelay");
+					}
+					
+				} catch (SocketTimeoutException e) {
+					// This exception is thrown if we wait on receive() longer
+					// than the timeout
+					ElapsedTime.abort("PingRaw_TCPTotalDelay");
+					//System.out.println("UDP socket timeout");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					ElapsedTime.abort("PingRaw_TCPTotalDelay");
+					//e.printStackTrace();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					ElapsedTime.abort("PingRaw_TCPTotalDelay");
+					//e.printStackTrace();
+				}
+				tcpSocket.close();
+				tcpSocket = null;
+			}
+			
+		} catch (SocketException e) {
+			// This exception is thrown if we wait on receive() longer
+			// than the timeout
+			ElapsedTime.abort("PingRaw_TCPTotalDelay");
+			System.out.println("TCP socket timeout");
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			ElapsedTime.abort("PingRaw_TCPTotalDelay");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			ElapsedTime.abort("PingRaw_TCPTotalDelay");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			ElapsedTime.abort("PingRaw_TCPTotalDelay");
+		}
+		
+		return ElapsedTime.get("PingRaw_TCPTotalDelay");
 	}
 }
