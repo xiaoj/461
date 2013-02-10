@@ -16,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.net.base.NetBase;
+import edu.uw.cs.cse461.service.EchoServiceBase;
 import edu.uw.cs.cse461.util.Log;
 
 
@@ -34,7 +35,7 @@ import edu.uw.cs.cse461.util.Log;
  */
 public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	private static final String TAG="TCPMessageHandler";
-	
+	private Socket socket;
 	//--------------------------------------------------------------------------------------
 	// helper routines
 	//--------------------------------------------------------------------------------------
@@ -63,8 +64,10 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	protected static int byteToInt(byte buf[]) {
 		// You need to implement this.  It's the inverse of intToByte().
-		
-		return 0;
+		ByteBuffer b = ByteBuffer.allocate(4);
+		b.order(ByteOrder.BIG_ENDIAN);
+		b.put(buf);
+		return b.getInt(0);
 	}
 
 	/**
@@ -73,6 +76,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 * @throws IOException
 	 */
 	public TCPMessageHandler(Socket sock) throws IOException {
+		
 	}
 	
 	/**
@@ -124,6 +128,11 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	
 	@Override
 	public void sendMessage(byte[] buf) throws IOException {
+		OutputStream os = socket.getOutputStream();
+		byte[] length = intToByte(buf.length);
+		os.write(length);
+		os.write(buf);
+		socket.shutdownOutput();
 	}
 	
 	/**
@@ -161,7 +170,28 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
-		return null;
+		InputStream is = socket.getInputStream();
+		
+		// read the length
+		byte[] headerBuf = new byte[4];
+		int len = is.read(headerBuf);
+		int length = byteToInt(headerBuf);
+		
+		// read the payload
+		byte[] buf = new byte[length];
+		try {
+			len = 0;
+			while ( len >= 0 ) {
+				len = is.read(buf, 0, buf.length);
+				if ( len > 0 ) {
+					String response = new String(buf, 0, len);
+					System.out.print(response);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("TCP read failed: " + e.getMessage());
+		}
+		return buf;
 	}
 	
 	@Override
