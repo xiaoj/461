@@ -34,6 +34,10 @@ import edu.uw.cs.cse461.util.Log;
  */
 public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	private static final String TAG="TCPMessageHandler";
+	private Socket socket;
+	private int timeOut;
+	private int maxLength;
+	private boolean maxLenIsSet;
 	
 	//--------------------------------------------------------------------------------------
 	// helper routines
@@ -58,27 +62,64 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 * We need an "on the wire" format for a binary integer.
 	 * This method decodes from that format, which is little endian
 	 * (low order bits of int are in element [0] of byte array, etc.).
-	 * @param buf
-	 * @return 
+	 * 
+	 * @param buf  buf is byte array contains 4 bytes
+	 * @return return int store in buf, unless buf contain not 4 bytes
 	 */
 	protected static int byteToInt(byte buf[]) {
 		// You need to implement this.  It's the inverse of intToByte().
-		
+		if(buf.length == 4){
+			ByteBuffer b = ByteBuffer.wrap(reverse(buf));
+			return b.getInt(0);
+		}
 		return 0;
 	}
 
+	/*
+	 * helper function to byteToInt to reverse bytes. 
+	 * Because ByteBuffer ordering does not reverse bytes.
+	 */
+	private static byte[] reverse(byte buf[]) {
+		byte r[] = new byte[4];
+		for(int i = 0; i < 4; i++){
+			r[i] = buf[3-i];
+		}
+		return r;
+	}
+	
+	
 	/**
 	 * Constructor, associating this TCPMessageHandler with a connected socket.
 	 * @param sock
 	 * @throws IOException
 	 */
 	public TCPMessageHandler(Socket sock) throws IOException {
+		if (sock == null) {
+			throw new NullPointerException("socket is null");
+		}
+		
+		if (!sock.isConnected()) {
+			throw new IOException("socket is not connected");
+		}	
+		socket = sock;
+		timeOut = 0;
+		maxLength = Integer.MAX_VALUE;
+		maxLenIsSet = false;
 	}
 	
 	/**
 	 * Closes the underlying socket and renders this TCPMessageHandler useless.
 	 */
 	public void close() {
+		if(socket != null){
+			try {
+				socket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		socket = null;
 	}
 	
 	/**
@@ -88,7 +129,12 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public int setTimeout(int timeout) throws SocketException {
-		return 0;
+		if(timeout < 0){
+			return -1;
+		}
+		int prev = timeOut;
+		timeOut = timeout;
+		return prev;
 	}
 	
 	/**
@@ -98,16 +144,24 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public boolean setNoDelay(boolean value) throws SocketException {
+		
 		return false;
 	}
 	
 	/**
 	 * Sets the maximum allowed size for which decoding of a message will be attempted.
 	 * @return The previous setting of the maximum allowed message length.
+	 * 		   If maxLen is invalid input return -1, no new max length is set.
 	 */
 	@Override
 	public int setMaxReadLength(int maxLen) {
-		return 0;
+		if(maxLen < 0){
+			return -1;
+		}
+		maxLenIsSet = true;
+		int prev = maxLength;
+		maxLength = maxLen;
+		return prev;
 	}
 
 	/**
@@ -115,7 +169,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public int getMaxReadLength() {
-		return 0;
+		return maxLength;
 	}
 	
 	//--------------------------------------------------------------------------------------
