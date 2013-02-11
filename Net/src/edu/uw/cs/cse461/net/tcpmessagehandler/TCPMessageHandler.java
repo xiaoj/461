@@ -35,7 +35,6 @@ import edu.uw.cs.cse461.util.Log;
 public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	private static final String TAG="TCPMessageHandler";
 	private Socket socket;
-	private int timeOut;
 	private int maxLength;
 	private boolean maxLenIsSet;
 	
@@ -102,7 +101,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 			throw new IOException("socket is not connected");
 		}	
 		socket = sock;
-		timeOut = 0;
+		// socket setTimeOut?
 		maxLength = Integer.MAX_VALUE;
 		maxLenIsSet = false;
 	}
@@ -129,11 +128,8 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public int setTimeout(int timeout) throws SocketException {
-		if(timeout < 0){
-			return -1;
-		}
-		int prev = timeOut;
-		timeOut = timeout;
+		int prev = socket.getSoTimeout();
+		socket.setSoTimeout(timeout);
 		return prev;
 	}
 	
@@ -144,8 +140,9 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public boolean setNoDelay(boolean value) throws SocketException {
-		
-		return false;
+		socket.setTcpNoDelay(value);
+		boolean prev = socket.getTcpNoDelay();
+		return prev;
 	}
 	
 	/**
@@ -158,6 +155,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		if(maxLen < 0){
 			return -1;
 		}
+
 		maxLenIsSet = true;
 		int prev = maxLength;
 		maxLength = maxLen;
@@ -182,7 +180,8 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		byte[] length = intToByte(buf.length);
 		os.write(length);
 		os.write(buf);
-		socket.shutdownOutput();
+		System.out.println(buf.toString());
+		//socket.shutdownOutput();
 	}
 	
 	/**
@@ -190,6 +189,8 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public void sendMessage(String str) throws IOException {
+		byte[] buf = str.getBytes();
+		sendMessage(buf);
 	}
 
 	/**
@@ -197,6 +198,8 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public void sendMessage(int value) throws IOException{
+		byte[] buf = intToByte(value);
+		sendMessage(buf);
 	}
 	
 	/**
@@ -204,6 +207,9 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public void sendMessage(JSONArray jsArray) throws IOException {
+		String str = jsArray.toString();
+		byte[] buf = str.getBytes();
+		sendMessage(buf);
 	}
 	
 	/**
@@ -211,6 +217,9 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	 */
 	@Override
 	public void sendMessage(JSONObject jsObject) throws IOException {
+		String str = jsObject.toString();
+		byte[] buf = str.getBytes();
+		sendMessage(buf);
 	}
 	
 	//--------------------------------------------------------------------------------------
@@ -221,22 +230,29 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
 		InputStream is = socket.getInputStream();
-		
+		System.out.println("start read");
 		// read the length
+		int bufLen;
 		byte[] headerBuf = new byte[4];
-		int len = is.read(headerBuf);
+		int len = is.read(headerBuf, 0, 4);
 		int length = byteToInt(headerBuf);
+		System.out.println(len);
+		// use the smaller length between the "length" in the frame and the maxLength
+		if (length < maxLength){
+			bufLen = length;
+		}else{
+			bufLen = maxLength;
+		}
 		
 		// read the payload
-		byte[] buf = new byte[length];
+		byte[] buf = new byte[bufLen];
+		int counter = 0;
+
 		try {
-			len = 0;
-			while ( len >= 0 ) {
-				len = is.read(buf, 0, buf.length);
-				if ( len > 0 ) {
-					String response = new String(buf, 0, len);
-					System.out.print(response);
-				}
+			while ( len >= 0 && counter < bufLen) {
+				len = is.read(buf, counter, bufLen-counter);
+				counter += len;
+				System.out.println("bytes read: "+counter+" \n");
 			}
 		} catch (Exception e) {
 			System.out.println("TCP read failed: " + e.getMessage());
@@ -246,21 +262,27 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	
 	@Override
 	public String readMessageAsString() throws IOException {
-		return null;
+		byte[] buf = readMessageAsBytes();
+		return buf.toString();
 	}
 
 	@Override
 	public int readMessageAsInt() throws IOException {
-		return 0;
+		byte[] buf = readMessageAsBytes();
+		return byteToInt(buf);
 	}
 	
 	@Override
 	public JSONArray readMessageAsJSONArray() throws IOException, JSONException {
+		byte[] buf = readMessageAsBytes();
+		String str = buf.toString();
 		return null;
 	}
 	
 	@Override
 	public JSONObject readMessageAsJSONObject() throws IOException, JSONException {
+		byte[] buf = readMessageAsBytes();
+		String str = buf.toString();
 		return null;
 	}
 }

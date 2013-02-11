@@ -58,7 +58,7 @@ public class EchoTCPMessageHandler extends NetLoadableConsoleApp {
 					tcpMessageHandlerSocket = new TCPMessageHandler(tcpSocket);
 					tcpMessageHandlerSocket.setTimeout(socketTimeout);
 					tcpMessageHandlerSocket.setNoDelay(true);
-
+					
 					tcpMessageHandlerSocket.sendMessage(EchoServiceBase.HEADER_STR);
 					tcpMessageHandlerSocket.sendMessage(msg);
 					
