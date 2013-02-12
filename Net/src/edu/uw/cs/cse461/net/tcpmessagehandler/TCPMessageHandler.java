@@ -101,7 +101,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 			throw new IOException("socket is not connected");
 		}	
 		socket = sock;
-		// socket setTimeOut?
 		maxLength = Integer.MAX_VALUE;
 		maxLenIsSet = false;
 	}
@@ -276,13 +275,15 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	public JSONArray readMessageAsJSONArray() throws IOException, JSONException {
 		byte[] buf = readMessageAsBytes();
 		String str = buf.toString();
-		return null;
+		JSONArray jArray = new JSONArray(str);
+		return jArray;
 	}
 	
 	@Override
 	public JSONObject readMessageAsJSONObject() throws IOException, JSONException {
 		byte[] buf = readMessageAsBytes();
 		String str = buf.toString();
-		return null;
+		JSONObject jObject = new JSONObject(str);
+		return jObject;
 	}
 }
