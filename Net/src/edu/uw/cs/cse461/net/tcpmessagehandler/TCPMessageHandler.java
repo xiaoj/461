@@ -179,7 +179,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		byte[] length = intToByte(buf.length);
 		os.write(length);
 		os.write(buf);
-		System.out.println(buf.toString());
+		//os.close();
 		//socket.shutdownOutput();
 	}
 	
@@ -233,28 +233,37 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		// read the length
 		int bufLen;
 		byte[] headerBuf = new byte[4];
-		int len = is.read(headerBuf, 0, 4);
-		int length = byteToInt(headerBuf);
-		System.out.println(len);
+		int len = is.read(headerBuf, 0, 3);
+
+		int payloadLength = byteToInt(headerBuf);
+		System.out.println("read headerBuf length = "+len);
 		// use the smaller length between the "length" in the frame and the maxLength
-		if (length < maxLength){
-			bufLen = length;
+		if (payloadLength < maxLength){
+			bufLen = payloadLength;
 		}else{
 			bufLen = maxLength;
 		}
 		
 		// read the payload
 		byte[] buf = new byte[bufLen];
-		int counter = 0;
-
-		try {
-			while ( len >= 0 && counter < bufLen) {
-				len = is.read(buf, counter, bufLen-counter);
-				counter += len;
-				System.out.println("bytes read: "+counter+" \n");
+		int readPayloadLength = is.read(buf, 0, payloadLength);
+		System.out.println("readPayloadLength=" + readPayloadLength);
+		if(readPayloadLength == -1){
+			// there's no payload
+			return headerBuf;
+		} else { 
+			// keep reading the payload and store it in the buf[]
+			int counter = readPayloadLength;
+	
+			try {
+				while ( readPayloadLength >= 0 && counter < bufLen) {
+					readPayloadLength = is.read(buf, counter, bufLen-counter);
+					counter += readPayloadLength;
+					System.out.println("Payload bytes read: "+counter);
+				}
+			} catch (Exception e) {
+				System.out.println("TCP read failed: " + e.getMessage());
 			}
-		} catch (Exception e) {
-			System.out.println("TCP read failed: " + e.getMessage());
 		}
 		return buf;
 	}
