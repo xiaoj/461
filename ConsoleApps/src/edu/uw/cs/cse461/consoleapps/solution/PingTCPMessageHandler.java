@@ -111,7 +111,6 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 			ConfigManager config = NetBase.theNetBase().config();
 
 			try {
-
 				String targetIP = config.getProperty("net.server.ip");
 				if ( targetIP == null ) {
 					System.out.println("No net.server.ip entry in config file.");

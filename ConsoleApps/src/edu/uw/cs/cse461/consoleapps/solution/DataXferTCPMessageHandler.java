@@ -24,7 +24,7 @@ import edu.uw.cs.cse461.util.SampledStatistic.TransferRateInterval;
 
 public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements DataXferInterface{
 	public DataXferTCPMessageHandler() throws Exception {
-		super("dataxfer");
+		super("dataxfertcpmessagehandler");
 	}
 	
 	@Override
@@ -62,21 +62,20 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 			String trialStr = console.readLine();
 			int nTrials = Integer.parseInt(trialStr);
 
-			for ( int index=0; index<DataXferRawService.NPORTS; index++ ) {
+			TransferRate.clear();
 
-				TransferRate.clear();
-				
-				int port = basePort + index;
-				int xferLength = DataXferRawService.XFERSIZE[index];
+			int port = basePort;
+			System.out.print("Enter transfer size: ");
+			String xferLengthStr = console.readLine();
+			int xferLength = Integer.parseInt(xferLengthStr);
 
-				System.out.println("\n" + xferLength + " bytes");
+			System.out.println("\n" + xferLength + " bytes");
 
-				TransferRateInterval tcpStats = DataXferRate(DataXferServiceBase.RESPONSE_OKAY_STR, server, port, socketTimeout, xferLength, nTrials);
-				System.out.println("\nTCP: xfer rate = " + String.format("%9.0f", tcpStats.mean() * 1000.0) + " bytes/sec.");
-				System.out.println("TCP: failure rate = " + String.format("%5.1f", tcpStats.failureRate()) +
-						           " [" + tcpStats.nAborted()+ "/" + tcpStats.nTrials() + "]");
-			}
-			
+			TransferRateInterval tcpStats = DataXferRate(DataXferServiceBase.HEADER_STR, server, port, socketTimeout, xferLength, nTrials);
+			System.out.println("\nTCP: xfer rate = " + String.format("%9.0f", tcpStats.mean() * 1000.0) + " bytes/sec.");
+			System.out.println("TCP: failure rate = " + String.format("%5.1f", tcpStats.failureRate()) +
+					" [" + tcpStats.nAborted()+ "/" + tcpStats.nTrials() + "]");
+
 		} catch (Exception e) {
 			System.out.println("Unanticipated exception: " + e.getMessage());
 		}
@@ -90,12 +89,12 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 		// send header
 		TCPMessageHandler tcpHandler = new TCPMessageHandler(tcpSocket);
 		tcpHandler.sendMessage(header);
-		
+		System.out.println(header);
 		// send message
 		JSONObject controlMsg = new JSONObject();
 		controlMsg.put("transferSize", xferLength);
 		tcpHandler.sendMessage(controlMsg);
-		
+		System.out.println(controlMsg.toString());
 		tcpSocket.shutdownOutput();
 		
 		// read the response
