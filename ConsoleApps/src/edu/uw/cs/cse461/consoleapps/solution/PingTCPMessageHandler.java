@@ -41,15 +41,13 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 					ElapsedTime.start("Ping_TCPTotalDelay");
 					// send header
 					tcpHandler.sendMessage(header);
+
 					// send message
 					tcpHandler.sendMessage(msg);
 					tcpSocket.shutdownOutput();
 					
-					// read the header.  Either the entire header arrives in one chunk, or we
-					// (mistakenly) reject it.
-
+					// read the header
 					String headerStr = tcpHandler.readMessageAsString();
-					System.out.println("headerStr: "+headerStr);
 					if ( headerStr.length() != EchoServiceBase.RESPONSE_OKAY_STR.length() ){
 						ElapsedTime.abort("Ping_TCPTotalDelay");
 						System.out.println("Bad response header length: got " + headerStr.length() + " but expected " + EchoServiceBase.RESPONSE_OKAY_STR.length());
@@ -57,11 +55,11 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 						ElapsedTime.abort("Ping_TCPTotalDelay");
 						System.out.println("Bad response header: got '" + headerStr + "' but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
 					} else {
+						// read message
 						byte[] readBuf = tcpHandler.readMessageAsBytes();
 						if(readBuf.length != 0){
 							ElapsedTime.abort("Ping_TCPTotalDelay");
-							System.out.println("Bad response payload: " + readBuf.toString());
-							//throw new Exception("Bad response payload: " + readBuf.toString());
+							System.out.println("Bad response payload: " + new String(readBuf));
 						}
 						ElapsedTime.stop("Ping_TCPTotalDelay");
 					}
@@ -70,7 +68,6 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 					// This exception is thrown if we wait on receive() longer
 					// than the timeout
 					ElapsedTime.abort("Ping_TCPTotalDelay");
-					//System.out.println("UDP socket timeout");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					ElapsedTime.abort("Ping_TCPTotalDelay");

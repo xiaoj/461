@@ -179,8 +179,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		byte[] length = intToByte(buf.length);
 		os.write(length);
 		os.write(buf);
-		//os.close();
-		//socket.shutdownOutput();
 	}
 	
 	/**
@@ -229,14 +227,15 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
 		InputStream is = socket.getInputStream();
-		System.out.println("start read");
+		System.out.println("---------start read---------");
 		// read the length
 		int bufLen;
 		byte[] headerBuf = new byte[4];
-		int len = is.read(headerBuf, 0, 3);
+		int len = is.read(headerBuf, 0, 4);
 
 		int payloadLength = byteToInt(headerBuf);
-		System.out.println("read headerBuf length = "+len);
+		//System.out.println("read headerBuf length: "+len);
+		//System.out.println("payload length: "+payloadLength);
 		// use the smaller length between the "length" in the frame and the maxLength
 		if (payloadLength < maxLength){
 			bufLen = payloadLength;
@@ -246,19 +245,17 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		
 		// read the payload
 		byte[] buf = new byte[bufLen];
-		int readPayloadLength = is.read(buf, 0, payloadLength);
-		System.out.println("readPayloadLength=" + readPayloadLength);
-		if(readPayloadLength == -1){
+		System.out.println("bufLen=" + bufLen);
+		if(bufLen == 0){
 			// there's no payload
-			return headerBuf;
+			return buf;
 		} else { 
 			// keep reading the payload and store it in the buf[]
-			int counter = readPayloadLength;
-	
+			int counter = 0;
 			try {
-				while ( readPayloadLength >= 0 && counter < bufLen) {
-					readPayloadLength = is.read(buf, counter, bufLen-counter);
-					counter += readPayloadLength;
+				while ( len >= 0 && counter < bufLen) {
+					len = is.read(buf, counter, bufLen-counter);
+					counter += len;
 					System.out.println("Payload bytes read: "+counter);
 				}
 			} catch (Exception e) {
@@ -271,7 +268,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public String readMessageAsString() throws IOException {
 		byte[] buf = readMessageAsBytes();
-		return buf.toString();
+		return new String(buf);
 	}
 
 	@Override

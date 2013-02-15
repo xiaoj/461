@@ -47,8 +47,8 @@ public class EchoTCPMessageHandlerService extends EchoServiceBase  {
 									tcpMessageHandlerSocket = new TCPMessageHandler(sock);
 									tcpMessageHandlerSocket.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
 									tcpMessageHandlerSocket.setNoDelay(true);
-									
 									String header = tcpMessageHandlerSocket.readMessageAsString();
+		
 									if ( ! header.equalsIgnoreCase(EchoServiceBase.HEADER_STR))
 										throw new Exception("Bad header: '" + header + "'");
 									String msg = tcpMessageHandlerSocket.readMessageAsString();
