@@ -16,9 +16,13 @@ public class Test {
 		return buf;
 	}
 
+
 	public static int byteToInt(byte buf[]) {
-		ByteBuffer b = ByteBuffer.wrap(reverse(buf));
-		return b.getInt(0);
+		if(buf.length < 4){
+			ByteBuffer b = ByteBuffer.wrap(reverse(buf));
+			return b.getInt(0);
+		}
+		return 0;
 	}
 	
 	private static byte[] reverse(byte buf[]) {
