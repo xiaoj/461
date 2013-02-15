@@ -265,6 +265,9 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 				System.out.println("TCP read failed: " + e.getMessage());
 			}
 		}
+		//??????????????
+		//try to close the inputstream
+		is.close();
 		return buf;
 	}
 	
