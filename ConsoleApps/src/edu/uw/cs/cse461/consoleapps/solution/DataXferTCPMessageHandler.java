@@ -87,10 +87,6 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 		tcpSocket = new Socket(hostIP, port);
 		tcpSocket.setSoTimeout(timeout);
 		
-		InputStream is = tcpSocket.getInputStream();
-		OutputStream os = tcpSocket.getOutputStream();
-		int dataLength = 0; // keep track of the total received data length
-		
 		// send header
 		TCPMessageHandler tcpHandler = new TCPMessageHandler(tcpSocket);
 		tcpHandler.sendMessage(header);
@@ -101,37 +97,50 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 		tcpHandler.sendMessage(controlMsg);
 		
 		tcpSocket.shutdownOutput();
-/*
-		byte[] receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength];
+		
+		// read the response
+		int dataLength = 0; // keep track of the total received data length
+		byte[] receiveBuf = new byte[xferLength];
 		ByteBuffer totalBuf = ByteBuffer.wrap(receiveBuf);
-		int len = is.read(receiveBuf);
-		totalBuf.put(receiveBuf);
-		dataLength += len;
-*/
-		// read the header response
+
+		// read the header
 		String headerStr = tcpHandler.readMessageAsString();
-		System.out.println("headerStr: "+headerStr);
 		if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
 			TransferRate.abort("tcp", xferLength);
 			System.out.println("Bad response header: got " + headerStr + " but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
 		} else {
-			// read the response messages
 			
-			System.out.println("message: "+new String(tcpHandler.readMessageAsBytes()));
-			/*
-			while(len != -1 && dataLength < (EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength)){
-				len = is.read(receiveBuf);
-				if (len != -1){
-					dataLength += len;
+			// read the messages
+			for(int i = 0; i < xferLength/1000; i++){
+				byte[] buf = tcpHandler.readMessageAsBytes();
+				if (buf.length > 0){
+					totalBuf.put(buf);
+					dataLength += buf.length;
 				}else{
 					TransferRate.abort("tcp", xferLength);
-					System.out.println("Bad response: got " + dataLength + " data but expected " + xferLength + " data.");
+					//System.out.println("Bad response: got " + dataLength + " data but expected " + xferLength + " data.");
 				}
-			}	
-			*/	
+			}
+			
+			// read the last message if it's < 1000 bytes
+			if (xferLength % 1000 != 0){
+				byte[] buf = tcpHandler.readMessageAsBytes();
+				dataLength += buf.length;
+				if (buf.length == xferLength){
+					totalBuf.put(buf);
+				}else{
+					TransferRate.abort("tcp", xferLength);
+				}
+			}
+			
+			if (dataLength != xferLength){
+				// server doesn't send back the requested amount of data
+				TransferRate.abort("tcp", xferLength);
+			}
+			
 		}
 		tcpSocket.close();
-		return headerStr.getBytes();
+		return totalBuf.array();
 	}
 	
 	public TransferRateInterval DataXferRate(String header, String hostIP, int port, int timeout, int xferLength, int nTrials){

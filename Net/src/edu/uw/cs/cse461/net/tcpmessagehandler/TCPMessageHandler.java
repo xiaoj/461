@@ -227,15 +227,13 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
 		InputStream is = socket.getInputStream();
-		//System.out.println("---------start read---------");
+
 		// read the length
 		int bufLen;
 		byte[] headerBuf = new byte[4];
 		int len = is.read(headerBuf, 0, 4);
-
 		int payloadLength = byteToInt(headerBuf);
-		//System.out.println("read headerBuf length: "+len);
-		//System.out.println("payload length: "+payloadLength);
+
 		// use the smaller length between the "length" in the frame and the maxLength
 		if (payloadLength < maxLength){
 			bufLen = payloadLength;
@@ -245,7 +243,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		
 		// read the payload
 		byte[] buf = new byte[bufLen];
-		//System.out.println("bufLen=" + bufLen);
 		if(bufLen == 0){
 			// there's no payload
 			return buf;
@@ -256,7 +253,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 				while ( len >= 0 && counter < bufLen) {
 					len = is.read(buf, counter, bufLen-counter);
 					counter += len;
-					//.println("Payload bytes read: "+counter);
 				}
 			} catch (Exception e) {
 				System.out.println("TCP read failed: " + e.getMessage());
@@ -280,7 +276,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public JSONArray readMessageAsJSONArray() throws IOException, JSONException {
 		byte[] buf = readMessageAsBytes();
-		String str = buf.toString();
+		String str = new String(buf);
 		JSONArray jArray = new JSONArray(str);
 		return jArray;
 	}
@@ -288,7 +284,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public JSONObject readMessageAsJSONObject() throws IOException, JSONException {
 		byte[] buf = readMessageAsBytes();
-		String str = buf.toString();
+		String str = new String(buf);
 		JSONObject jObject = new JSONObject(str);
 		return jObject;
 	}
