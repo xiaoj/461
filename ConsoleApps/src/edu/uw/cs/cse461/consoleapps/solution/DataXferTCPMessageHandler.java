@@ -71,15 +71,10 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 
 				System.out.println("\n" + xferLength + " bytes");
 
-				//-----------------------------------------------------
-				// TCP transfer
-				//-----------------------------------------------------
-
 				TransferRateInterval tcpStats = DataXferRate(DataXferServiceBase.RESPONSE_OKAY_STR, server, port, socketTimeout, xferLength, nTrials);
 				System.out.println("\nTCP: xfer rate = " + String.format("%9.0f", tcpStats.mean() * 1000.0) + " bytes/sec.");
 				System.out.println("TCP: failure rate = " + String.format("%5.1f", tcpStats.failureRate()) +
 						           " [" + tcpStats.nAborted()+ "/" + tcpStats.nTrials() + "]");
-
 			}
 			
 		} catch (Exception e) {
@@ -96,27 +91,34 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 		OutputStream os = tcpSocket.getOutputStream();
 		int dataLength = 0; // keep track of the total received data length
 		
+		// send header
 		TCPMessageHandler tcpHandler = new TCPMessageHandler(tcpSocket);
-
 		tcpHandler.sendMessage(header);
+		
+		// send message
 		JSONObject controlMsg = new JSONObject();
 		controlMsg.put("transferSize", xferLength);
 		tcpHandler.sendMessage(controlMsg);
 		
 		tcpSocket.shutdownOutput();
-
+/*
 		byte[] receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength];
 		ByteBuffer totalBuf = ByteBuffer.wrap(receiveBuf);
 		int len = is.read(receiveBuf);
 		totalBuf.put(receiveBuf);
 		dataLength += len;
-		
-		String headerStr = new String(receiveBuf, 0, 4);
+*/
+		// read the header response
+		String headerStr = tcpHandler.readMessageAsString();
+		System.out.println("headerStr: "+headerStr);
 		if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
 			TransferRate.abort("tcp", xferLength);
-			System.out.println("Bad response header: got '" + headerStr + "' but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
-		
+			System.out.println("Bad response header: got " + headerStr + " but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
 		} else {
+			// read the response messages
+			
+			System.out.println("message: "+new String(tcpHandler.readMessageAsBytes()));
+			/*
 			while(len != -1 && dataLength < (EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength)){
 				len = is.read(receiveBuf);
 				if (len != -1){
@@ -125,11 +127,11 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 					TransferRate.abort("tcp", xferLength);
 					System.out.println("Bad response: got " + dataLength + " data but expected " + xferLength + " data.");
 				}
-			}		
+			}	
+			*/	
 		}
 		tcpSocket.close();
-		//System.out.println(totalBuf.toString());
-		return totalBuf.array();
+		return headerStr.getBytes();
 	}
 	
 	public TransferRateInterval DataXferRate(String header, String hostIP, int port, int timeout, int xferLength, int nTrials){
@@ -140,7 +142,7 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 				TransferRate.stop("tcp", xferLength);
 			} catch (Exception e) {
 				TransferRate.abort("tcp", xferLength);
-				//System.out.println("TCP trial failed: " + e.getMessage());
+				System.out.println("TCP trial failed: " + e.getMessage());
 			}
 		}
 		return TransferRate.get("tcp");

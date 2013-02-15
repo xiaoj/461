@@ -227,7 +227,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
 		InputStream is = socket.getInputStream();
-		System.out.println("---------start read---------");
+		//System.out.println("---------start read---------");
 		// read the length
 		int bufLen;
 		byte[] headerBuf = new byte[4];
@@ -245,7 +245,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		
 		// read the payload
 		byte[] buf = new byte[bufLen];
-		System.out.println("bufLen=" + bufLen);
+		//System.out.println("bufLen=" + bufLen);
 		if(bufLen == 0){
 			// there's no payload
 			return buf;
@@ -256,15 +256,12 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 				while ( len >= 0 && counter < bufLen) {
 					len = is.read(buf, counter, bufLen-counter);
 					counter += len;
-					System.out.println("Payload bytes read: "+counter);
+					//.println("Payload bytes read: "+counter);
 				}
 			} catch (Exception e) {
 				System.out.println("TCP read failed: " + e.getMessage());
 			}
 		}
-		//??????????????
-		//try to close the inputstream
-		is.close();
 		return buf;
 	}
 	

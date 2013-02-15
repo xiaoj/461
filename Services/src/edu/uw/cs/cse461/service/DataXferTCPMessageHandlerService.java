@@ -38,14 +38,12 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 		mBasePort = config.getAsInt("dataxferraw.server.baseport", 0);
 		if ( mBasePort == 0 ) throw new RuntimeException("dataxferraw service can't run -- no dataxferraw.server.baseport entry in config file");
 
-		createThread(mBasePort, serverIP);
-		createThread(mBasePort+1, serverIP);
-		createThread(mBasePort+2, serverIP);
-		createThread(mBasePort+3, serverIP);
+		for (int i=0; i < NPORTS; i++){
+			createThread(mBasePort+i, serverIP);
+		}
 	}
 	
 	public void createThread(final int port, final String serverIP) throws Exception{
-		final int numBytes = 1000 * (int) Math.pow(10, port - mBasePort);
 		mServerSocket = new ServerSocket();
 		mServerSocket.bind(new InetSocketAddress(serverIP, port));
 		mServerSocket.setSoTimeout( NetBase.theNetBase().config().getAsInt("net.timeout.granularity", 500));
