@@ -49,7 +49,7 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 						Socket sock = null;
 						byte[] buf = new byte[1000];
 						try {
-							//System.out.println("hi");
+							System.out.println("hi");
 							sock = mServerSocket.accept();
 							System.out.println("bound? "+sock.isBound());
 							TCPMessageHandler tcpMessageHandlerSocket = null;
