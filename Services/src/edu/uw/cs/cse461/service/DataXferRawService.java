@@ -30,7 +30,7 @@ import edu.uw.cs.cse461.net.base.NetLoadableInterface.NetLoadableServiceInterfac
  */
 public class DataXferRawService extends DataXferServiceBase implements NetLoadableServiceInterface {
 	private static final String TAG="DataXferRawService";
-	
+	private ServerSocket mServerSocket;
 	public static final int NPORTS = 4;
 	public static final int[] XFERSIZE = {1000, 10000, 100000, 1000000};
 
@@ -198,15 +198,10 @@ public class DataXferRawService extends DataXferServiceBase implements NetLoadab
 	 */
 	@Override
 	public String dumpState() {
-		/*
 		StringBuilder sb = new StringBuilder(super.dumpState());
-		sb.append("\nListening on:\n\tTCP: ");
+		sb.append("\nListening on: ");
 		if ( mServerSocket != null ) sb.append(mServerSocket.toString());
-		else sb.append("Not listening");
-		sb.append("\n\tUDP: ");
-		if ( mDatagramSocket != null ) sb.append(mDatagramSocket.getLocalSocketAddress());
-		else sb.append("Not listening");
-		return sb.toString();*/
-		return "";
+		sb.append("\n");
+		return sb.toString();
 	}
 }

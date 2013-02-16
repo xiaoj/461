@@ -66,7 +66,7 @@ public class EchoTCPMessageHandler extends NetLoadableConsoleApp {
 					String headerStr = tcpMessageHandlerSocket.readMessageAsString();
 					if ( ! headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR) )
 						throw new Exception("Bad response header: '" + headerStr + "'");
-
+					
 					// read response payload (which should be empty)
 					String response = tcpMessageHandlerSocket.readMessageAsString();
 					if ( !  response.equals(msg))

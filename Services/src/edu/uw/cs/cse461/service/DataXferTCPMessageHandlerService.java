@@ -49,9 +49,7 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 						Socket sock = null;
 						byte[] buf = new byte[1000];
 						try {
-							//System.out.println("hi");
 							sock = mServerSocket.accept();
-							System.out.println("bound? "+sock.isBound());
 							TCPMessageHandler tcpMessageHandlerSocket = null;
 							try {
 								System.out.println("socket accepted");
@@ -113,4 +111,14 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 		};
 		tcpThread.start();
 	}
+	
+	@Override
+	public String dumpState() {
+		StringBuilder sb = new StringBuilder(super.dumpState());
+		sb.append("\nListening on: ");
+		if ( mServerSocket != null ) sb.append(mServerSocket.toString());
+		sb.append("\n");
+		return sb.toString();
+	}
+	
 }

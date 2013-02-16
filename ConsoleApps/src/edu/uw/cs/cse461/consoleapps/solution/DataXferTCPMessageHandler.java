@@ -41,37 +41,30 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 				if ( server == null ) return;
 				if ( server.equals("exit")) return;
 			}
-
-			int basePort = config.getAsInt("dataxferraw.server.baseport", -1);
-			if ( basePort == -1 ) {
-				System.out.print("Enter port number, or empty line to exit: ");
-				String portStr = console.readLine();
-				if ( portStr == null || portStr.trim().isEmpty() ) return;
-				basePort = Integer.parseInt(portStr);
-			}
+			
+			System.out.print("Enter port number, or empty line to exit: ");
+			String portStr = console.readLine();
+			if ( portStr == null || portStr.trim().isEmpty() ) return;
+			int basePort = Integer.parseInt(portStr);
 			
 			int socketTimeout = config.getAsInt("net.timeout.socket", -1);
 			if ( socketTimeout < 0 ) {
 				System.out.print("Enter socket timeout (in msec.): ");
 				String timeoutStr = console.readLine();
 				socketTimeout = Integer.parseInt(timeoutStr);
-				
 			}
 
 			System.out.print("Enter number of trials: ");
 			String trialStr = console.readLine();
 			int nTrials = Integer.parseInt(trialStr);
-
-			TransferRate.clear();
-
-			int port = basePort;
 			System.out.print("Enter transfer size: ");
 			String xferLengthStr = console.readLine();
 			int xferLength = Integer.parseInt(xferLengthStr);
 
 			System.out.println("\n" + xferLength + " bytes");
-
-			TransferRateInterval tcpStats = DataXferRate(DataXferServiceBase.HEADER_STR, server, port, socketTimeout, xferLength, nTrials);
+			
+			TransferRate.clear();
+			TransferRateInterval tcpStats = DataXferRate(DataXferServiceBase.HEADER_STR, server, basePort, socketTimeout, xferLength, nTrials);
 			System.out.println("\nTCP: xfer rate = " + String.format("%9.0f", tcpStats.mean() * 1000.0) + " bytes/sec.");
 			System.out.println("TCP: failure rate = " + String.format("%5.1f", tcpStats.failureRate()) +
 					" [" + tcpStats.nAborted()+ "/" + tcpStats.nTrials() + "]");
@@ -83,18 +76,20 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 	
 	public byte[] DataXfer(String header, String hostIP, int port, int timeout, int xferLength) throws JSONException, IOException{
 		Socket tcpSocket;
+		System.out.println("port1:"+port);
 		tcpSocket = new Socket(hostIP, port);
 		tcpSocket.setSoTimeout(timeout);
-		
+		tcpSocket.setTcpNoDelay(true);
+		System.out.println("port2:"+tcpSocket.getPort());
 		// send header
 		TCPMessageHandler tcpHandler = new TCPMessageHandler(tcpSocket);
 		tcpHandler.sendMessage(header);
-		System.out.println(header);
+		
 		// send message
 		JSONObject controlMsg = new JSONObject();
 		controlMsg.put("transferSize", xferLength);
 		tcpHandler.sendMessage(controlMsg);
-		System.out.println(controlMsg.toString());
+
 		tcpSocket.shutdownOutput();
 		
 		// read the response
