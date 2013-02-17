@@ -1,21 +1,17 @@
 package edu.uw.cs.cse461.service;
 
 import java.io.EOFException;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.tcpmessagehandler.TCPMessageHandler;
-import edu.uw.cs.cse461.util.ConfigManager;
 import edu.uw.cs.cse461.util.IPFinder;
 import edu.uw.cs.cse461.util.Log;
-import edu.uw.cs.cse461.util.SampledStatistic.TransferRateInterval;
 
 public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 	private static final String TAG="DataXferTCPMessageHandlerService";
@@ -67,23 +63,22 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 								// now respond and send the header
 								tcpMessageHandler.sendMessage(EchoServiceBase.RESPONSE_OKAY_STR);
 
-								// send the messages
+								// send the messages that are > PACKET_SIZE
 								String msg = "!"; 
 								if ( transferSize >= PACKET_SIZE){
-									// transferSize >= 1000 bytes
 									byte[] buf = new byte[PACKET_SIZE];
 									// copy the msg i times into buf until buf is full (PACKET_SIZE = 1000 bytes)
 									for (int i = 0; i < PACKET_SIZE; i++){
 										System.arraycopy(msg.getBytes(), 0, buf, i, msg.getBytes().length);
 									}
 
-									// send the packet (1000 bytes) i times until the total bytes sent = size
+									// send the packet (PACKET_SIZE bytes) i times until the total bytes sent = transferSize
 									for (int i = 0; i < transferSize/PACKET_SIZE; i++){
 										tcpMessageHandler.sendMessage(buf);
 									}
 								}
 
-								// send the first/last packet if it's < 1000 bytes
+								// send the first/last packet if it's < PACKET_SIZE bytes
 								if (transferSize % PACKET_SIZE != 0){
 									byte[] lastBuf= new byte[transferSize % PACKET_SIZE];
 									for(int i = 0; i < transferSize % PACKET_SIZE ; i++){

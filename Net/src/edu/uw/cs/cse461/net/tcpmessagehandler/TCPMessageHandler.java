@@ -36,12 +36,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	private static final String TAG="TCPMessageHandler";
 	private Socket socket;
 	private int maxLength;
-	private boolean maxLenIsSet;
-	
-	//--------------------------------------------------------------------------------------
-	// helper routines
-	//--------------------------------------------------------------------------------------
-
 	/**
 	 * We need an "on the wire" format for a binary integer.
 	 * This method encodes into that format, which is little endian
@@ -102,7 +96,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		}	
 		socket = sock;
 		maxLength = Integer.MAX_VALUE;
-		maxLenIsSet = false;
 	}
 	
 	/**
@@ -113,7 +106,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -155,7 +147,6 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 			return -1;
 		}
 
-		maxLenIsSet = true;
 		int prev = maxLength;
 		maxLength = maxLen;
 		return prev;
