@@ -23,6 +23,8 @@ import edu.uw.cs.cse461.util.SampledStatistic.TransferRate;
 import edu.uw.cs.cse461.util.SampledStatistic.TransferRateInterval;
 
 public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements DataXferInterface{
+	private int PACKET_SIZE = 1000;
+	
 	public DataXferTCPMessageHandler() throws Exception {
 		super("dataxfertcpmessagehandler");
 	}
@@ -75,12 +77,10 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 	}
 	
 	public byte[] DataXfer(String header, String hostIP, int port, int timeout, int xferLength) throws JSONException, IOException{
-		Socket tcpSocket;
-		System.out.println("port1:"+port);
-		tcpSocket = new Socket(hostIP, port);
+		Socket tcpSocket = new Socket(hostIP, port);
 		tcpSocket.setSoTimeout(timeout);
 		tcpSocket.setTcpNoDelay(true);
-		System.out.println("port2:"+tcpSocket.getPort());
+
 		// send header
 		TCPMessageHandler tcpHandler = new TCPMessageHandler(tcpSocket);
 		tcpHandler.sendMessage(header);
@@ -92,7 +92,7 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 
 		tcpSocket.shutdownOutput();
 		
-		// read the response
+		// start to read the response
 		int dataLength = 0; // keep track of the total received data length
 		byte[] receiveBuf = new byte[xferLength];
 		ByteBuffer totalBuf = ByteBuffer.wrap(receiveBuf);
@@ -102,25 +102,26 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 		if ( !headerStr.equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR)){
 			TransferRate.abort("tcp", xferLength);
 			System.out.println("Bad response header: got " + headerStr + " but expected '" + EchoServiceBase.RESPONSE_OKAY_STR + "'");
+		
 		} else {
 			
-			// read the messages
-			for(int i = 0; i < xferLength/1000; i++){
+			// read the messages if the request amount of data is >= PACKET_SIZE bytes
+			for(int i = 0; i < xferLength/PACKET_SIZE; i++){
 				byte[] buf = tcpHandler.readMessageAsBytes();
 				if (buf.length > 0){
 					totalBuf.put(buf);
 					dataLength += buf.length;
 				}else{
 					TransferRate.abort("tcp", xferLength);
-					//System.out.println("Bad response: got " + dataLength + " data but expected " + xferLength + " data.");
+					System.out.println("Bad response: got " + dataLength + " data but expected " + xferLength + " data.");
 				}
 			}
 			
-			// read the last message if it's < 1000 bytes
-			if (xferLength % 1000 != 0){
+			// read the first/last message if it's < PACKET_SIZE bytes
+			if (xferLength % PACKET_SIZE != 0){
 				byte[] buf = tcpHandler.readMessageAsBytes();
 				dataLength += buf.length;
-				if (buf.length == xferLength){
+				if (buf.length == xferLength % PACKET_SIZE){
 					totalBuf.put(buf);
 				}else{
 					TransferRate.abort("tcp", xferLength);
@@ -130,10 +131,9 @@ public class DataXferTCPMessageHandler extends NetLoadableConsoleApp implements 
 			if (dataLength != xferLength){
 				// server doesn't send back the requested amount of data
 				TransferRate.abort("tcp", xferLength);
-			}
-			
+			}	
 		}
-		tcpSocket.close();
+		tcpHandler.close();
 		return totalBuf.array();
 	}
 	

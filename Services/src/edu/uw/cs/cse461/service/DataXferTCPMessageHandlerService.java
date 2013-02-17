@@ -21,6 +21,7 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 	private static final String TAG="DataXferTCPMessageHandlerService";
 	
 	private ServerSocket mServerSocket;
+	private int PACKET_SIZE = 1000;
 	
 	public DataXferTCPMessageHandlerService() throws Exception{
 		super("dataxfertcpmessagehandler");
@@ -47,46 +48,51 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 				try {
 					while ( !mAmShutdown ) {
 						Socket sock = null;
-						byte[] buf = new byte[1000];
+						
 						try {
 							sock = mServerSocket.accept();
-							TCPMessageHandler tcpMessageHandlerSocket = null;
+							TCPMessageHandler tcpMessageHandler = null;
+							
 							try {
-								System.out.println("socket accepted");
-								tcpMessageHandlerSocket = new TCPMessageHandler(sock);
-								tcpMessageHandlerSocket.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
-								tcpMessageHandlerSocket.setNoDelay(true);
+								tcpMessageHandler = new TCPMessageHandler(sock);
+								tcpMessageHandler.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
+								tcpMessageHandler.setNoDelay(true);
 
-								String header = tcpMessageHandlerSocket.readMessageAsString();
-								if ( ! header.equalsIgnoreCase(EchoServiceBase.HEADER_STR))
+								String header = tcpMessageHandler.readMessageAsString();
+								if ( ! header.equalsIgnoreCase(HEADER_STR))
 									throw new Exception("Bad header: '" + header + "'");
-								JSONObject headStr = tcpMessageHandlerSocket.readMessageAsJSONObject();
-								System.out.println(headStr.toString());
-								int size = headStr.getInt("transferSize");
-								System.out.println("transferSize = "+size);
-								String msg = "Max is awesome!!!!!!";
-								// copy the msg i times into buf until buf is full (1000 bytes)
-								for (int i = 0; i < (buf.length / msg.getBytes().length); i+=msg.getBytes().length){
-									System.arraycopy(msg.getBytes(), 0, buf, i, 1000);
-								}
-								System.out.println("packet length = "+buf.length);
+								JSONObject headStr = tcpMessageHandler.readMessageAsJSONObject();
+								int transferSize = headStr.getInt("transferSize");
 								
 								// now respond and send the header
-								tcpMessageHandlerSocket.sendMessage(EchoServiceBase.RESPONSE_OKAY_STR);
-								
-								// send the packet (1000 bytes) i times until the total bytes sent = size
-								for (int i = 0; i < size; i+=buf.length){
-									tcpMessageHandlerSocket.sendMessage(buf);
-								}
-								// send the last packet if it's < 1000 bytes
-								if (size % 1000 != 0){
-									byte[] lastBuf= new byte[size%1000];
-									String lastMsg = "!";
-									for(int i = 0; i < size%1000; i++){
-										System.arraycopy(lastMsg.getBytes(), 0, lastBuf, i, size%1000);
+								tcpMessageHandler.sendMessage(EchoServiceBase.RESPONSE_OKAY_STR);
+
+								// send the messages
+								String msg = "!"; 
+								if ( transferSize >= PACKET_SIZE){
+									// transferSize >= 1000 bytes
+									byte[] buf = new byte[PACKET_SIZE];
+									// copy the msg i times into buf until buf is full (PACKET_SIZE = 1000 bytes)
+									for (int i = 0; i < PACKET_SIZE; i++){
+										System.arraycopy(msg.getBytes(), 0, buf, i, msg.getBytes().length);
 									}
-									tcpMessageHandlerSocket.sendMessage(lastBuf);
+
+									// send the packet (1000 bytes) i times until the total bytes sent = size
+									for (int i = 0; i < transferSize/PACKET_SIZE; i++){
+										tcpMessageHandler.sendMessage(buf);
+									}
 								}
+
+								// send the first/last packet if it's < 1000 bytes
+								if (transferSize % PACKET_SIZE != 0){
+									byte[] lastBuf= new byte[transferSize % PACKET_SIZE];
+									for(int i = 0; i < transferSize % PACKET_SIZE ; i++){
+										System.arraycopy(msg.getBytes(), 0, lastBuf, i, msg.getBytes().length);
+									}
+									tcpMessageHandler.sendMessage(lastBuf);
+								}
+
+								sock.shutdownOutput();
 							} catch (SocketTimeoutException e) {
 								Log.e(TAG, "Timed out waiting for data on tcp connection");
 							} catch (EOFException e) {
@@ -95,7 +101,7 @@ public class DataXferTCPMessageHandlerService extends DataXferServiceBase {
 							} catch (Exception e) {
 								Log.i(TAG, "Unexpected exception while handling connection: " + e.getMessage());
 							} finally {
-								if ( tcpMessageHandlerSocket != null ) try { tcpMessageHandlerSocket.close(); } catch (Exception e) {}
+								if ( tcpMessageHandler != null ) try { tcpMessageHandler.close(); } catch (Exception e) {}
 							}
 						} catch (SocketTimeoutException e) {
 							// this is normal.  Just loop back and see if we're terminating.

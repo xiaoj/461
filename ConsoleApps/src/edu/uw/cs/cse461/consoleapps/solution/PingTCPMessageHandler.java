@@ -36,7 +36,7 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 				tcpSocket.setSoTimeout(timeout);
 				TCPMessageHandler tcpHandler = new TCPMessageHandler(tcpSocket);
 				tcpHandler.setNoDelay(true);
-				
+
 				try {
 					ElapsedTime.start("Ping_TCPTotalDelay");
 					// send header

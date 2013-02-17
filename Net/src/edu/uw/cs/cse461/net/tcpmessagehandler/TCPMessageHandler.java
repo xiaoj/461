@@ -240,7 +240,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		}else{
 			bufLen = maxLength;
 		}
-		
+
 		// read the payload
 		byte[] buf = new byte[bufLen];
 		if(bufLen == 0){
@@ -252,7 +252,9 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 			try {
 				while ( len >= 0 && counter < bufLen) {
 					len = is.read(buf, counter, bufLen-counter);
-					counter += len;
+					if (len > -1){
+						counter += len;
+					}
 				}
 			} catch (Exception e) {
 				System.out.println("TCP read failed: " + e.getMessage());
