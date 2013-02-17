@@ -282,3 +282,141 @@ Total tests: 16 | 16 Passed, 0 OK, 0 Failed
 
 Total tests: 16 | 16 Passed, 0 OK, 0 Failed
 
+
+----- DataXferTCPMessageHandler
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+
+Total tests: 16 | 16 Passed, 0 OK, 0 Failed
+
+
+----- DataXferTCPMessageHandler
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 1 of 1 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server sends back the correct amount of data.
+    RESULT: 5 of 5 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server doesn't respond.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 1000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 10000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 80000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+[PROJ2TEST] Xfer test: PASS
+    CLIENT: Your client requests 150000 bytes of data.
+    SERVER: Our server sends back too little data.
+    RESULT: 0 of 2 transfers were completed. 
+
+Total tests: 16 | 16 Passed, 0 OK, 0 Failed
+

@@ -24,7 +24,6 @@ import edu.uw.cs.cse461.consoleapps.PingInterface;
 public class PingTCPMessageHandler extends NetLoadableConsoleApp implements PingInterface{
 	public PingTCPMessageHandler() {
 		super("pingtcpmessagehandler");
-		// TODO Auto-generated constructor stub
 	}
 
 	public ElapsedTimeInterval ping(String header, String hostIP, int port, int timeout, int nTrials) throws Exception{
@@ -69,16 +68,15 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 					// than the timeout
 					ElapsedTime.abort("Ping_TCPTotalDelay");
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					ElapsedTime.abort("Ping_TCPTotalDelay");
-					//e.printStackTrace();
+					e.printStackTrace();
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					ElapsedTime.abort("Ping_TCPTotalDelay");
-					//e.printStackTrace();
+					e.printStackTrace();
+				} finally{
+					tcpHandler.close();
+					tcpSocket = null;
 				}
-				tcpSocket.close();
-				tcpSocket = null;
 			}
 			
 		} catch (SocketException e) {
@@ -87,15 +85,12 @@ public class PingTCPMessageHandler extends NetLoadableConsoleApp implements Ping
 			ElapsedTime.abort("Ping_TCPTotalDelay");
 			System.out.println("TCP socket timeout");
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			ElapsedTime.abort("Ping_TCPTotalDelay");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			ElapsedTime.abort("Ping_TCPTotalDelay");
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			ElapsedTime.abort("Ping_TCPTotalDelay");
 		}
