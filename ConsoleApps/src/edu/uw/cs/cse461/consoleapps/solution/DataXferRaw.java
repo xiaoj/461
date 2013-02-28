@@ -134,13 +134,13 @@ public class DataXferRaw extends NetLoadableConsoleApp implements DataXferRawInt
 		socket.setSoTimeout(socketTimeout);
 		DatagramPacket packet = new DatagramPacket(header, header.length, new InetSocketAddress(hostIP, udpPort));
 		socket.send(packet);
-
 		// keep receiving packets until the payload size matched with the expected xferLength
 		while(dataLength < xferLength){
 			receiveBuf = new byte[EchoServiceBase.RESPONSE_OKAY_STR.length() + 1000];
 			DatagramPacket receivePacket = new DatagramPacket(receiveBuf, receiveBuf.length);
 			socket.receive(receivePacket);
 			totalBuf.put(Arrays.copyOfRange(receiveBuf, 4, receiveBuf.length - 1));
+			
 			dataLength += receivePacket.getLength() - 4;
 			
 			if ((dataLength+xferLength < header.length) && (receivePacket.getLength() != EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength)){
@@ -218,6 +218,7 @@ public class DataXferRaw extends NetLoadableConsoleApp implements DataXferRawInt
 		} else {
 			while(len != -1 && dataLength < (EchoServiceBase.RESPONSE_OKAY_STR.length() + xferLength)){
 				len = is.read(receiveBuf);
+		
 				if (len != -1){
 					dataLength += len;
 				}else{
@@ -227,6 +228,7 @@ public class DataXferRaw extends NetLoadableConsoleApp implements DataXferRawInt
 			}
 			
 		}
+		System.out.println("readDataLength="+dataLength);
 		tcpSocket.close();
 		//System.out.println(totalBuf.toString());
 		return totalBuf.array();
