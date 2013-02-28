@@ -15,6 +15,7 @@ import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableService;
 import edu.uw.cs.cse461.util.Log;
 
+
 /**
  * Class implementing the caller side of RPC -- the RPCCall.invoke() method.
  * The invoke() method itself is static, for the convenience of the callers,
@@ -114,11 +115,13 @@ public class RPCCall extends NetLoadableService {
 			int socketTimeout,        // max time to wait for reply
 			boolean tryAgain          // true if an invocation failure on a persistent connection should cause a re-try of the call, false to give up
 			) throws JSONException, IOException {
+		
 		return null;
 	}
 	
 	@Override
 	public void shutdown() {
+		
 	}
 	
 	@Override
