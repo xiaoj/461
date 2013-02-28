@@ -145,6 +145,7 @@ public class DataXferRawService extends DataXferServiceBase implements NetLoadab
 						try {
 							// accept() blocks until a client connects.  When it does, a new socket is created that communicates only
 							// with that client.  That socket is returned.
+						
 							sock = mServerSocket.accept();
 							// We're going to read from sock, to get the message to echo, but we can't risk a client mistake
 							// blocking us forever.  So, arrange for the socket to give up if no data arrives for a while.
