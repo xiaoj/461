@@ -20,6 +20,7 @@ import edu.uw.cs.cse461.net.rpc.RPCMessage.RPCResponseMessage;
 import edu.uw.cs.cse461.net.rpc.RPCMessage.RPCResponseMessage.RPCErrorResponseMessage;
 import edu.uw.cs.cse461.net.rpc.RPCMessage.RPCResponseMessage.RPCNormalResponseMessage;
 import edu.uw.cs.cse461.net.tcpmessagehandler.TCPMessageHandler;
+import edu.uw.cs.cse461.util.ConfigManager;
 import edu.uw.cs.cse461.util.IPFinder;
 import edu.uw.cs.cse461.util.Log;
 
@@ -31,6 +32,7 @@ import edu.uw.cs.cse461.util.Log;
  */
 public class RPCService extends NetLoadableService implements Runnable, RPCServiceInterface {
 	private static final String TAG="RPCService";
+	private int port;
 	
 	/**
 	 * Constructor.  Creates the Java ServerSocket and binds it to a port.
@@ -43,6 +45,8 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	public RPCService() throws Exception {
 		super("rpc");
+		ConfigManager config = NetBase.theNetBase().config();
+		port = config.getAsInt("rpc.server.port", 0);
 	}
 	
 	/**
@@ -51,6 +55,8 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
+		// persistent connection here??
+		
 	}
 	
 	/**
@@ -63,6 +69,8 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public synchronized void registerHandler(String serviceName, String methodName, RPCCallableMethod method) throws Exception {
+		// how are serviceName and methodName used?
+		JSONObject retval = method.handleCall(args);
 	}
 	
 	/**
@@ -83,7 +91,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public int localPort() {
-		return 0;
+		return port;
 	}
 	
 	@Override

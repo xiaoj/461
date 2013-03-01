@@ -115,6 +115,9 @@ public class RPCCall extends NetLoadableService {
 			int socketTimeout,        // max time to wait for reply
 			boolean tryAgain          // true if an invocation failure on a persistent connection should cause a re-try of the call, false to give up
 			) throws JSONException, IOException {
+		// wantPersistentConnection = if caller requests {"connection": "keep-alive"}
+		boolean wantPersistentConnection = false;
+		RPCCallerSocket socket = new RPCCallerSocket(ip, port, wantPersistentConnection);
 		
 		return null;
 	}
