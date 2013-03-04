@@ -1,6 +1,7 @@
 package edu.uw.cs.cse461.net.rpc;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,6 +14,8 @@ import org.json.JSONObject;
 
 import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableService;
+import edu.uw.cs.cse461.net.tcpmessagehandler.TCPMessageHandler;
+import edu.uw.cs.cse461.service.EchoServiceBase;
 import edu.uw.cs.cse461.util.Log;
 
 
@@ -115,11 +118,41 @@ public class RPCCall extends NetLoadableService {
 			int socketTimeout,        // max time to wait for reply
 			boolean tryAgain          // true if an invocation failure on a persistent connection should cause a re-try of the call, false to give up
 			) throws JSONException, IOException {
-		// wantPersistentConnection = if caller requests {"connection": "keep-alive"}
-		boolean wantPersistentConnection = false;
-		RPCCallerSocket socket = new RPCCallerSocket(ip, port, wantPersistentConnection);
 		
-		return null;
+		Socket tcpSocket =  new Socket(ip, port);
+		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(tcpSocket);
+		tcpMessageHandlerSocket.setTimeout(socketTimeout);
+		//tcpMessageHandlerSocket.setNoDelay(true);
+		
+		/* Initial control handshake: calling RPC service */
+		
+		JSONObject option = new JSONObject().put("connection", "keep-alive");
+		JSONObject jsonConnect = new JSONObject().put("action", "connect")
+										.put("type", "control").put("options", option);
+		RPCMessage connectMSG = RPCMessage.unmarshall(jsonConnect.toString());
+		tcpMessageHandlerSocket.sendMessage(connectMSG.marshall());
+		
+		// read response header
+		JSONObject connectResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
+		int callid = connectResponse.getInt("callid");
+		String type = connectResponse.getString("type");
+		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
+			throw new Exception("Bad connect response: '" + connectResponse.getString("msg") + "'");
+			
+		/* RPC Invocation */
+		JSONObject jsonInvoke = new JSONObject().put("app", serviceName).put("args", userRequest)
+										.put("type", "invoke").put("method", method);
+		RPCMessage invokeMSG = RPCMessage.unmarshall(jsonInvoke.toString());
+		tcpMessageHandlerSocket.sendMessage(invokeMSG.marshall());
+		
+		// read response invocation msg
+		JSONObject invokeResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
+		type = invokeResponse.getString("type");
+		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
+			throw new Exception("Bad invoke response: '" + connectResponse.getString("message") + "'");
+		
+		// ????????????? close socket, persistent connection, cache
+		return invokeResponse.getJSONObject("value");
 	}
 	
 	@Override
