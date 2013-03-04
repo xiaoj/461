@@ -33,6 +33,7 @@ import edu.uw.cs.cse461.util.Log;
 public class RPCService extends NetLoadableService implements Runnable, RPCServiceInterface {
 	private static final String TAG="RPCService";
 	private int port;
+	private HashMap<String, HashMap<String, RPCCallableMethod>> map;
 	
 	/**
 	 * Constructor.  Creates the Java ServerSocket and binds it to a port.
@@ -47,6 +48,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		super("rpc");
 		ConfigManager config = NetBase.theNetBase().config();
 		port = config.getAsInt("rpc.server.port", 0);
+		map = new HashMap<String, HashMap<String, RPCCallableMethod>>();
 	}
 	
 	/**
@@ -55,7 +57,6 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
-		// persistent connection here??
 		
 	}
 	
@@ -69,8 +70,10 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public synchronized void registerHandler(String serviceName, String methodName, RPCCallableMethod method) throws Exception {
-		// how are serviceName and methodName used?
-		JSONObject retval = method.handleCall(args);
+		HashMap<String, RPCCallableMethod> value = new HashMap<String, RPCCallableMethod>();
+		value.put(methodName, method);
+		map.put(serviceName, value);
+		//JSONObject retval = method.handleCall(args);
 	}
 	
 	/**
@@ -82,7 +85,11 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 * @return The existing registration for that method of that service, or null if no registration exists.
 	 */
 	public RPCCallableMethod getRegistrationFor( String serviceName, String methodName) {
-		return null;
+		HashMap<String, RPCCallableMethod> value = map.get(serviceName);
+		if(value == null){
+			return null;
+		}
+		return value.get(methodName);
 	}
 	
 	/**

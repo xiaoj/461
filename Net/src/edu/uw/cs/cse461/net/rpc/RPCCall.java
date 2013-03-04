@@ -15,7 +15,6 @@ import org.json.JSONObject;
 import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableService;
 import edu.uw.cs.cse461.net.tcpmessagehandler.TCPMessageHandler;
-import edu.uw.cs.cse461.service.EchoServiceBase;
 import edu.uw.cs.cse461.util.Log;
 
 
@@ -51,8 +50,7 @@ public class RPCCall extends NetLoadableService {
 	 * @param userRequest Arguments to call
 	 * @param socketTimeout Maximum time to wait for a response, in msec.
 	 * @return Returns whatever the remote method returns.
-	 * @throws JSONException
-	 * @throws IOException
+	 * @throws Exception 
 	 */
 	public static JSONObject invoke(
 			String ip,				  // ip or dns name of remote host
@@ -61,7 +59,7 @@ public class RPCCall extends NetLoadableService {
 			String method,            // name of that service's method to invoke
 			JSONObject userRequest,   // arguments to send to remote method,
 			int socketTimeout         // timeout for this call, in msec.
-			) throws JSONException, IOException {
+			) throws Exception {
 		RPCCall rpcCallObj =  (RPCCall)NetBase.theNetBase().getService( "rpccall" );
 		if ( rpcCallObj == null ) throw new IOException("RPCCall.invoke() called but the RPCCall service isn't loaded");
 		return rpcCallObj._invoke(ip, port, serviceName, method, userRequest, socketTimeout, true);
@@ -71,6 +69,7 @@ public class RPCCall extends NetLoadableService {
 	 * A convenience implementation of invoke() that doesn't require caller to set a timeout.
 	 * The timeout is set to the net.timeout.socket entry from the config file, or 2 seconds if that
 	 * doesn't exist.
+	 * @throws Exception 
 	 */
 	public static JSONObject invoke(
 			String ip,				  // ip or dns name of remote host
@@ -78,7 +77,7 @@ public class RPCCall extends NetLoadableService {
 			String serviceName,       // name of the remote service
 			String method,            // name of that service's method to invoke
 			JSONObject userRequest    // arguments to send to remote method,
-			) throws JSONException, IOException {
+			) throws Exception {
 		int socketTimeout  = NetBase.theNetBase().config().getAsInt("net.timeout.socket", 2000);
 		return invoke(ip, port, serviceName, method, userRequest, socketTimeout);
 	}
@@ -106,8 +105,7 @@ public class RPCCall extends NetLoadableService {
 	 * @param socketTimeout Max time to wait for this call
 	 * @param tryAgain Set to true if you want to repeat call if a socket error occurs; e.g., persistent socket is no good when you use it
 	 * @return
-	 * @throws JSONException
-	 * @throws IOException
+	 * @throws Exception 
 	 */
 	private JSONObject _invoke(
 			String ip,				  // ip or dns name of remote host
@@ -117,7 +115,7 @@ public class RPCCall extends NetLoadableService {
 			JSONObject userRequest,   // arguments to send to remote method
 			int socketTimeout,        // max time to wait for reply
 			boolean tryAgain          // true if an invocation failure on a persistent connection should cause a re-try of the call, false to give up
-			) throws JSONException, IOException {
+			) throws Exception {
 		
 		Socket tcpSocket =  new Socket(ip, port);
 		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(tcpSocket);
