@@ -10,8 +10,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.consoleapps.DataXferInterface;
-import edu.uw.cs.cse461.consoleapps.DataXferInterface.DataXferRawInterface;
 import edu.uw.cs.cse461.net.base.NetBase;
+
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableConsoleApp;
 import edu.uw.cs.cse461.net.rpc.RPCCall;
 import edu.uw.cs.cse461.net.tcpmessagehandler.TCPMessageHandler;
