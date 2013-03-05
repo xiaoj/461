@@ -125,22 +125,27 @@ public class RPCCall extends NetLoadableService {
 		/* Initial control handshake: calling RPC service */
 		// send connect msg
 		JSONObject option = new JSONObject().put("connection", "keep-alive");
-		JSONObject jsonConnect = new JSONObject().put("action", "connect")
-										.put("type", "control").put("options", option);
+		RPCMessage rpcConnect = new RPCMessage();
+		JSONObject jsonConnect = rpcConnect.marshall();
+		jsonConnect.put("action", "connect").put("type", "control").put("options", option);
+		
 		RPCMessage connectMSG = RPCMessage.unmarshall(jsonConnect.toString());
 		tcpMessageHandlerSocket.sendMessage(connectMSG.marshall());
-		
+
 		// read response msg
 		JSONObject connectResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
 		int callid = connectResponse.getInt("callid");
 		String type = connectResponse.getString("type");
 		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
 			throw new Exception("Bad connect response: '" + connectResponse.getString("msg") + "'");
-			
+		
+		
 		/* RPC Invocation */
 		// send invoke msg
-		JSONObject jsonInvoke = new JSONObject().put("app", serviceName).put("args", userRequest)
-										.put("type", "invoke").put("method", method);
+		RPCMessage rpcInvoke = new RPCMessage();
+		JSONObject jsonInvoke = rpcInvoke.marshall();
+		jsonInvoke.put("app", serviceName).put("args", userRequest)
+					.put("type", "invoke").put("method", method);
 		RPCMessage invokeMSG = RPCMessage.unmarshall(jsonInvoke.toString());
 		tcpMessageHandlerSocket.sendMessage(invokeMSG.marshall());
 		
