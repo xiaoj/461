@@ -57,7 +57,16 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
+		/* Initial Control Handshake */
+		// read connect msg
 		
+		// send response msg
+		
+		/* RPC Call Inovcation */
+		// read invoke msg
+		
+		// send requested msg
+		//JSONObject retval = method.handleCall(args);
 	}
 	
 	/**
@@ -73,7 +82,6 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		HashMap<String, RPCCallableMethod> value = new HashMap<String, RPCCallableMethod>();
 		value.put(methodName, method);
 		map.put(serviceName, value);
-		//JSONObject retval = method.handleCall(args);
 	}
 	
 	/**
