@@ -7,7 +7,8 @@ import edu.uw.cs.cse461.util.IPFinder;
 
 public class DataXferRPCService extends DataXferServiceBase implements NetLoadableServiceInterface{
 
-	public static final String HEADER_KEY = "xfer";
+	public static final String HEADER_KEY = "header";
+	public static final String HEADER_TAG_VALUE = "xfer";
 	public static final String HEADER_TAG_KEY = "tag";
 	public static final String HEADER_XFERLENGTH_KEY = "xferLength";
 	
