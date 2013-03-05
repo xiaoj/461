@@ -67,12 +67,14 @@ class RPCMessage {
 			JSONObject jsonObj = new JSONObject(jsonFormatString);
 			
 			String type = jsonObj.getString("type"); 
+			
 			if ( type.equalsIgnoreCase("control") ) return new RPCControlMessage(jsonObj);
 			if ( type.equalsIgnoreCase("invoke") )  return new RPCInvokeMessage(jsonObj);
 			if ( type.equalsIgnoreCase("OK") )      return new RPCNormalResponseMessage(jsonObj);
 			if ( type.equalsIgnoreCase("ERROR") )   return new RPCErrorResponseMessage(jsonObj);
 			String msg = "Got unrecognized type in message: " + type + " [" + jsonFormatString + "]"; 
 			Log.e(TAG, msg );
+			
 			throw new IOException(msg);
 
 		} catch (JSONException je) {
@@ -117,8 +119,10 @@ class RPCMessage {
 			
 			RPCControlMessage(JSONObject jsonObject) throws JSONException {
 				super(jsonObject);
+
 				mObject.put("type", "control");
 				mObject.put("action", jsonObject.get("action"));
+
 				if ( jsonObject.has("options") ) mObject.put("options", jsonObject.getJSONObject("options"));
 			}
 			
