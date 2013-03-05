@@ -15,12 +15,15 @@ import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableConsoleApp;
 import edu.uw.cs.cse461.net.rpc.RPCCall;
 import edu.uw.cs.cse461.net.tcpmessagehandler.TCPMessageHandler;
+import edu.uw.cs.cse461.service.DataXferRPCService;
 import edu.uw.cs.cse461.service.DataXferServiceBase;
 import edu.uw.cs.cse461.service.EchoRPCService;
 import edu.uw.cs.cse461.service.EchoServiceBase;
+import edu.uw.cs.cse461.util.Base64;
 import edu.uw.cs.cse461.util.ConfigManager;
 import edu.uw.cs.cse461.util.SampledStatistic.TransferRate;
 import edu.uw.cs.cse461.util.SampledStatistic.TransferRateInterval;
+
 
 public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterface{
 	private static final String TAG="DataXferRPC";
@@ -83,8 +86,7 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 	public byte[] DataXfer(JSONObject header, String hostIP, int port, int timeout) throws JSONException, IOException{
 		try {
 			// send message
-			JSONObject args = new JSONObject().put(DataXferRPCService.HEADER_KEY, header)
-											  .put(DataXferRPCService.PAYLOAD_KEY, msg);
+			JSONObject args = new JSONObject().put(DataXferRPCService.HEADER_KEY, header);
 			JSONObject response = RPCCall.invoke(hostIP, port, "datarpc", "dataxfer", args, timeout );
 			if ( response == null ) throw new IOException("dataXferRPC failed; response is null");
 			
@@ -96,20 +98,22 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 						               "' but wanted a JSONOBject with key '" + DataXferRPCService.HEADER_TAG_KEY + "' and string value '" +
 						               DataXferServiceBase.RESPONSE_OKAY_STR + "'");
 			
-			if ( response.has(DataXferRPCService.PAYLOAD_KEY) )System.out.println(response.getString(EchoRPCService.PAYLOAD_KEY));
-			else System.out.println("No payload returned!?  (No payload sent?)");
-			
+			//if ( response.has(DataXferRPCService.PAYLOAD_KEY) )System.out.println(response.getString(EchoRPCService.PAYLOAD_KEY));
+			//else System.out.println("No payload returned!?  (No payload sent?)");
+			return Base64.decode(response.getString("data"));
 		} catch (Exception e) {
 			System.out.println("Exception: " + e.getMessage());
+			return null;
 		} 
 	}
 	
-	public TransferRateInterval DataXferRate(JSONObject header, String hostIP, int port, int timeout, int nTrials){
+	public TransferRateInterval DataXferRate(JSONObject header, String hostIP, int port, int timeout, int nTrials) throws JSONException{
+		int xferLength = header.getJSONObject("header").getInt("xferLength");
 		for ( int trial=0; trial<nTrials; trial++) {
 			try {
 				TransferRate.start("rpc");
 				DataXfer(header, hostIP, port, timeout);
-				TransferRate.stop("rpc", );
+				TransferRate.stop("rpc", xferLength);
 			} catch (Exception e) {
 				TransferRate.abort("rpc", xferLength);
 				System.out.println("RPC trial failed: " + e.getMessage());
@@ -118,5 +122,5 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 		return TransferRate.get("rpc");
 	}
 		
-	}
+	
 }
