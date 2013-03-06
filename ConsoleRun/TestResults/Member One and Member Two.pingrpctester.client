@@ -1,0 +1,34 @@
+
+----- PingRPC
+Team: Member One and Member Two
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server responds immediately.
+    RESULT: 1 of 1 pings were completed. 
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server responds immediately.
+    RESULT: 5 of 5 pings were completed. 
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server throws an exception.
+    RESULT: 0 of 3 pings were completed. 
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server responds with a delay of 500ms.
+    RESULT: 5 of 5 pings were completed. 
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server responds with a delay of 3500ms.
+    RESULT: 0 of 3 pings were completed. 
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server responds with a delay of 200ms.
+    RESULT: 1 of 1 pings were completed. 
+[PROJ3TEST] ping test: PASS
+    CLIENT: Your client pings our server.
+    SERVER: Our server responds with a delay of 5000ms.
+    RESULT: 0 of 1 pings were completed. 
+
+Total tests: 7 | 7 Passed, 0 OK, 0 Failed
+
