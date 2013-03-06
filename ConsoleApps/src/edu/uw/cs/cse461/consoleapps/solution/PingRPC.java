@@ -11,13 +11,13 @@ import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadable.NetLoadableConsoleApp;
 import edu.uw.cs.cse461.net.rpc.RPCCall;
 import edu.uw.cs.cse461.service.EchoRPCService;
-import edu.uw.cs.cse461.service.EchoServiceBase;
+//import edu.uw.cs.cse461.service.EchoServiceBase;
 import edu.uw.cs.cse461.util.ConfigManager;
 import edu.uw.cs.cse461.util.SampledStatistic.ElapsedTime;
 import edu.uw.cs.cse461.util.SampledStatistic.ElapsedTimeInterval;
 
 public class PingRPC extends NetLoadableConsoleApp implements PingInterface{
-	private static final String TAG="PingRPC";
+	//private static final String TAG="PingRPC";
 	
 	public PingRPC() {
 		super("pingrpc");
@@ -70,24 +70,18 @@ public class PingRPC extends NetLoadableConsoleApp implements PingInterface{
 			for (int i = 0; i < nTrials; i++){
 				ElapsedTime.start("Ping_RPCTotalDelay");
 				// send message
-				System.out.println("header: "+header.toString());
 				JSONObject args = new JSONObject().put(EchoRPCService.HEADER_KEY, header)
 				.put(EchoRPCService.PAYLOAD_KEY, "");
 
 				JSONObject response = RPCCall.invoke(hostIP, port, "echorpc", "echo", args, timeout );
 
 				if ( response == null ) throw new IOException("RPC failed; response is null");
-				System.out.println("response: "+response.toString());
 				// examine response
-				/*
+				
 				JSONObject rcvdHeader = response.optJSONObject(EchoRPCService.HEADER_KEY);
 				
 				if ( rcvdHeader == null || !rcvdHeader.has(EchoRPCService.HEADER_TAG_KEY)||
 						!rcvdHeader.getString(EchoRPCService.HEADER_TAG_KEY).equalsIgnoreCase(EchoRPCService.RESPONSE_OKAY_STR)){
-				*/	
-				String rcvdHeader = response.optString(EchoRPCService.HEADER_KEY);
-				if ( rcvdHeader == null || !rcvdHeader.equalsIgnoreCase(EchoRPCService.RESPONSE_OKAY_STR)){
-					ElapsedTime.abort("Ping_RPCTotalDelay");
 					throw new IOException("bad response");
 				}
 				ElapsedTime.stop("Ping_RPCTotalDelay");
