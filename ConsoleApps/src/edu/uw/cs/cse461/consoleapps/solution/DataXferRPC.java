@@ -86,11 +86,8 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 	public byte[] DataXfer(JSONObject header, String hostIP, int port, int timeout) throws JSONException, IOException{
 		try {
 			// send message
-			System.out.println("header: " + header.toString());
 			JSONObject args = new JSONObject().put(DataXferRPCService.HEADER_KEY, header);
-			System.out.println("args" + args.toString());
 			JSONObject response = RPCCall.invoke(hostIP, port, "dataxferrpc", "dataxfer", args, timeout );
-			System.out.println("response" + response.toString());
 			if ( response == null ) throw new IOException("dataXferRPC failed; response is null");
 			
 			// examine response
@@ -101,8 +98,6 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 						               "' but wanted a JSONOBject with key '" + DataXferRPCService.HEADER_TAG_KEY + "' and string value '" +
 						               DataXferServiceBase.RESPONSE_OKAY_STR + "'");
 			
-			//if ( response.has(DataXferRPCService.PAYLOAD_KEY) )System.out.println(response.getString(EchoRPCService.PAYLOAD_KEY));
-			//else System.out.println("No payload returned!?  (No payload sent?)");
 			return Base64.decode(response.getString("data"));
 		} catch (Exception e) {
 			System.out.println("Exception: " + e.getMessage());
@@ -111,8 +106,9 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 	}
 	
 	public TransferRateInterval DataXferRate(JSONObject header, String hostIP, int port, int timeout, int nTrials) throws JSONException{
-		System.out.println("DataXferRate header : " + header.toString());
-		int xferLength = header.getInt("xferLength");
+		//System.out.println("DataXferRate header : " + header.toString());
+		//int xferLength = header.getInt("xferLength");
+		int xferLength = 10;
 		for ( int trial=0; trial<nTrials; trial++) {
 			try {
 				TransferRate.start("rpc");

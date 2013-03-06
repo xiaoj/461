@@ -77,17 +77,19 @@ public class PingRPC extends NetLoadableConsoleApp implements PingInterface{
 				JSONObject response = RPCCall.invoke(hostIP, port, "echorpc", "echo", args, timeout );
 
 				if ( response == null ) throw new IOException("RPC failed; response is null");
-System.out.println("response: "+response.toString());
+				System.out.println("response: "+response.toString());
 				// examine response
+				/*
 				JSONObject rcvdHeader = response.optJSONObject(EchoRPCService.HEADER_KEY);
 				
 				if ( rcvdHeader == null || !rcvdHeader.has(EchoRPCService.HEADER_TAG_KEY)||
-						!rcvdHeader.getString(EchoRPCService.HEADER_TAG_KEY).equalsIgnoreCase("test")){
-					
+						!rcvdHeader.getString(EchoRPCService.HEADER_TAG_KEY).equalsIgnoreCase(EchoRPCService.RESPONSE_OKAY_STR)){
+				*/	
+				String rcvdHeader = response.optString(EchoRPCService.HEADER_KEY);
+				if ( rcvdHeader == null || !rcvdHeader.equalsIgnoreCase(EchoRPCService.RESPONSE_OKAY_STR)){
 					ElapsedTime.abort("Ping_RPCTotalDelay");
 					throw new IOException("bad response");
 				}
-				System.out.println("end");
 				ElapsedTime.stop("Ping_RPCTotalDelay");
 			}
 		} catch (Exception e) {

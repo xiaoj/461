@@ -156,6 +156,7 @@ public class RPCCall extends NetLoadableService {
 			throw new Exception("Bad invoke response: '" + connectResponse.getString("message") + "'");
 		
 		// ????????????? close socket, persistent connection, cache
+		tcpMessageHandlerSocket.close();
 		return invokeResponse.getJSONObject("value");
 	}
 	
