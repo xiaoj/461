@@ -139,21 +139,24 @@ public class RPCCall extends NetLoadableService {
 		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
 			throw new Exception("Bad connect response: '" + connectResponse.getString("msg") + "'");
 		
-		
 		/* RPC Invocation */
 		// send invoke msg
 		RPCMessage rpcInvoke = new RPCMessage();
 		JSONObject jsonInvoke = rpcInvoke.marshall();
+		
 		jsonInvoke.put("app", serviceName).put("args", userRequest)
 					.put("type", "invoke").put("method", method);
+	
 		RPCMessage invokeMSG = RPCMessage.unmarshall(jsonInvoke.toString());
 		tcpMessageHandlerSocket.sendMessage(invokeMSG.marshall());
-		
+
 		// read response invocation msg
 		JSONObject invokeResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
+		
 		type = invokeResponse.getString("type");
-		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
-			throw new Exception("Bad invoke response: '" + connectResponse.getString("message") + "'");
+		
+		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id() || !invokeResponse.has("value"))
+			throw new Exception("Bad invoke response");
 		
 		// ????????????? close socket, persistent connection, cache
 		tcpMessageHandlerSocket.close();
