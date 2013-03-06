@@ -33,6 +33,7 @@ import edu.uw.cs.cse461.util.Log;
 public class RPCService extends NetLoadableService implements Runnable, RPCServiceInterface {
 	private static final String TAG="RPCService";
 	private int port;
+	private ServerSocket serverSocket;
 	private HashMap<String, HashMap<String, RPCCallableMethod>> map;
 	
 	/**
@@ -49,6 +50,11 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		ConfigManager config = NetBase.theNetBase().config();
 		port = config.getAsInt("rpc.server.port", 0);
 		map = new HashMap<String, HashMap<String, RPCCallableMethod>>();
+		String serverIP = IPFinder.localIP();
+		if ( serverIP == null ) throw new Exception("IPFinder isn't providing the local IP address.  Can't run.");
+		serverSocket =  new ServerSocket();
+		serverSocket.bind(new InetSocketAddress(serverIP, port));
+		serverSocket.setSoTimeout( NetBase.theNetBase().config().getAsInt("net.timeout.granularity", 500));
 	}
 	
 	/**
@@ -57,16 +63,28 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
-		/* Initial Control Handshake */
-		// read connect msg
 		
-		// send response msg
+		Socket socket;
+		try {
+			TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
+			/* Initial Control Handshake */
+			// read connect msg
+			
+			// send response msg
+			
+			
+			/* RPC Call Inovcation */
+			// read invoke msg
+			
+			// send requested msg
+			
+			//JSONObject retval = method.handleCall(args);
+			socket = serverSocket.accept();
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
 		
-		/* RPC Call Inovcation */
-		// read invoke msg
-		
-		// send requested msg
-		//JSONObject retval = method.handleCall(args);
 	}
 	
 	/**
