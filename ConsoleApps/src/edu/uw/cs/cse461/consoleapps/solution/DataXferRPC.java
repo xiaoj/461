@@ -27,6 +27,7 @@ import edu.uw.cs.cse461.util.SampledStatistic.TransferRateInterval;
 
 public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterface{
 	private static final String TAG="DataXferRPC";
+	private int xferLength;
 	
 	public DataXferRPC() {
 		super("dataxferrpc");
@@ -65,7 +66,7 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 			int nTrials = Integer.parseInt(trialStr);
 			System.out.print("Enter transfer size: ");
 			String xferLengthStr = console.readLine();
-			int xferLength = Integer.parseInt(xferLengthStr);
+			xferLength = Integer.parseInt(xferLengthStr);
 
 			System.out.println("\n" + xferLength + " bytes");
 			
@@ -86,8 +87,9 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 	public byte[] DataXfer(JSONObject header, String hostIP, int port, int timeout) throws Exception{
 		try {
 			// send message
+			header.put(DataXferRPCService.HEADER_XFERLENGTH_KEY, xferLength);
 			JSONObject args = new JSONObject().put(DataXferRPCService.HEADER_KEY, header);
-			System.out.println("args: "+args);
+			
 			JSONObject response = RPCCall.invoke(hostIP, port, "dataxferrpc", "dataxfer", args, timeout );
 			if ( response == null ) throw new IOException("dataXferRPC failed; response is null");
 
@@ -107,7 +109,6 @@ public class DataXferRPC extends NetLoadableConsoleApp implements DataXferInterf
 	}
 	
 	public TransferRateInterval DataXferRate(JSONObject header, String hostIP, int port, int timeout, int nTrials) throws JSONException{
-		int xferLength = header.getInt("xferLength");
 		for ( int trial=0; trial<nTrials; trial++) {
 			try {
 				TransferRate.start("rpc");

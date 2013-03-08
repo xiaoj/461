@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.net.base.NetBase;
@@ -63,25 +64,43 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
-		
 		Socket socket;
+		
 		try {
-			//TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
-			/* Initial Control Handshake */
-			// read connect msg
-			
-			// send response msg
-			
-			
-			/* RPC Call Inovcation */
-			// read invoke msg
-			
-			// send requested msg
-			
-			//JSONObject retval = method.handleCall(args);
+
 			socket = serverSocket.accept();
+			TCPMessageHandler tcpMessageHandler = null;
+
+			try {
+				tcpMessageHandler = new TCPMessageHandler(socket);
+				tcpMessageHandler.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
+				tcpMessageHandler.setNoDelay(true);
+				
+				/* Initial Control Handshake */
+				// read connect msg
+				JSONObject connectMSG = tcpMessageHandler.readMessageAsJSONObject();
+				
+				// send response msg
+				RPCMessage rpcConnect = new RPCMessage();
+				JSONObject jsonConnect = rpcConnect.marshall();
+				jsonConnect.put("callid", connectMSG.get("id")).put("type", "OK");
+				
+				/* RPC Call Inovcation */
+				// read invoke msg
+				
+				// send requested msg
+				
+				//JSONObject retval = method.handleCall(args);
+				
+			} catch (Exception e){
+				
+			}
+			
 		} catch (IOException e) {
 			
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -129,6 +148,10 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	
 	@Override
 	public String dumpState() {
-		return "";
+		StringBuilder sb = new StringBuilder("RPC service");
+		sb.append("\nListening on: ");
+		if ( serverSocket != null ) sb.append(serverSocket.toString());
+		sb.append("\n");
+		return sb.toString();
 	}
 }
