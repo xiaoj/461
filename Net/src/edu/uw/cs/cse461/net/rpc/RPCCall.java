@@ -120,7 +120,7 @@ public class RPCCall extends NetLoadableService {
 		Socket tcpSocket =  new Socket(ip, port);
 		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(tcpSocket);
 		tcpMessageHandlerSocket.setTimeout(socketTimeout);
-		//tcpMessageHandlerSocket.setNoDelay(true);
+		tcpMessageHandlerSocket.setNoDelay(true);
 		
 		/* Initial control handshake: calling RPC service */
 		// send connect msg
