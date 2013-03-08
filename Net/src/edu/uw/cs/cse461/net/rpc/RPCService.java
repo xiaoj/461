@@ -99,11 +99,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		} catch (IOException e) {
 			
 			e.printStackTrace();
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+		}	
 	}
 	
 	/**
