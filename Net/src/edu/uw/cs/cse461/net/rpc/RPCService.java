@@ -66,7 +66,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		
 		Socket socket;
 		try {
-			TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
+			//TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
 			/* Initial Control Handshake */
 			// read connect msg
 			
