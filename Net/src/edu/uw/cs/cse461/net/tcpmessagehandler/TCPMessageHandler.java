@@ -218,11 +218,12 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
 		InputStream is = socket.getInputStream();
-
+System.out.println("readMSGAsBytes");
 		// read the length
 		int bufLen;
 		byte[] headerBuf = new byte[4];
 		int len = is.read(headerBuf, 0, 4);
+
 		int payloadLength = byteToInt(headerBuf);
 
 		// use the smaller length between the "length" in the frame and the maxLength

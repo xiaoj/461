@@ -56,9 +56,10 @@ public class EchoRPC extends NetLoadableConsoleApp {
 													  .put(EchoRPCService.PAYLOAD_KEY, msg);
 					JSONObject response = RPCCall.invoke(targetIP, targetRPCPort, "echorpc", "echo", args, timeout );
 					if ( response == null ) throw new IOException("RPC failed; response is null");
-					
+					System.out.println("invoke success");
 					// examine response
 					JSONObject rcvdHeader = response.optJSONObject(EchoRPCService.HEADER_KEY);
+					System.out.println("rcvHeader="+rcvdHeader.toString());
 					if ( rcvdHeader == null || !rcvdHeader.has(EchoRPCService.HEADER_TAG_KEY)||
 							!rcvdHeader.getString(EchoRPCService.HEADER_TAG_KEY).equalsIgnoreCase(EchoServiceBase.RESPONSE_OKAY_STR))
 						throw new IOException("Bad response header: got '" + rcvdHeader.toString() +

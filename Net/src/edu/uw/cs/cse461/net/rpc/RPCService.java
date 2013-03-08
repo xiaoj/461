@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	public RPCService() throws Exception {
 		super("rpc");
+		System.out.println("rpcService constructor");
 		ConfigManager config = NetBase.theNetBase().config();
 		port = config.getAsInt("rpc.server.port", 0);
 		map = new HashMap<String, HashMap<String, RPCCallableMethod>>();
@@ -56,6 +58,8 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		serverSocket =  new ServerSocket();
 		serverSocket.bind(new InetSocketAddress(serverIP, port));
 		serverSocket.setSoTimeout( NetBase.theNetBase().config().getAsInt("net.timeout.granularity", 500));
+		Thread t = new Thread(this);
+		t.start();
 	}
 	
 	/**
@@ -64,71 +68,87 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
-		Socket socket = null;
-		while ( !mAmShutdown ) {
-			try {
-				socket = serverSocket.accept();
-				TCPMessageHandler tcpMessageHandler = null;
-				RPCMessage rpcMSG = new RPCMessage();
-				JSONObject sendMSG = rpcMSG.marshall();
-				JSONObject readMSG = null;
-
+		try {
+			while ( !mAmShutdown ) {
+				Socket socket = null;
 				try {
-					tcpMessageHandler = new TCPMessageHandler(socket);
-					tcpMessageHandler.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
-					tcpMessageHandler.setNoDelay(true);
+					socket = serverSocket.accept();
+					TCPMessageHandler tcpMessageHandler = null;
+					RPCMessage rpcMSG = new RPCMessage();
+					JSONObject sendMSG = rpcMSG.marshall();
+					JSONObject readMSG = null;
 
-					readMSG = tcpMessageHandler.readMessageAsJSONObject();
-					String type = readMSG.getString("type");
-					System.out.println("type: "+type);
-					// Initial Control Handshake
-					if (type.equalsIgnoreCase("control")){
-						// send response msg
-						sendMSG.put("callid", readMSG.get("id")).put("type", "OK");
-						tcpMessageHandler.sendMessage(sendMSG);
-						System.out.println("connect response sent");
-					}
+					try {
+						tcpMessageHandler = new TCPMessageHandler(socket);
+						tcpMessageHandler.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
+						tcpMessageHandler.setNoDelay(true);
 
-					// RPC Call Inovcation
-					if (type.equalsIgnoreCase("invoke")){
-						int callid = readMSG.getInt("id");
-						String serviceName = readMSG.getString("app");
-						String methodName = readMSG.getString("method");
-						RPCCallableMethod method = map.get(serviceName).get(methodName);
-						JSONObject retval = method.handleCall(readMSG.getJSONObject("args"));
-						
-						// send invoke msg
-						sendMSG.put("callid", callid).put("type", "OK")
-									.put("value", retval);
-						tcpMessageHandler.sendMessage(sendMSG);
-						System.out.println("invoke response sent");
-					}
-
-				} catch (Exception e){
-					// check for sanity
-					if(readMSG != null && !sendMSG.has("type")){
+						readMSG = tcpMessageHandler.readMessageAsJSONObject();
 						String type = readMSG.getString("type");
-						
-						// Initial Control Handshake Error Response
+
+						// Initial Control Handshake
 						if (type.equalsIgnoreCase("control")){
-							sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
-							.put("msg", e);
+							// send response msg
+							sendMSG.put("callid", readMSG.get("id")).put("type", "OK");
 							tcpMessageHandler.sendMessage(sendMSG);
+							System.out.println("connect response sent: "+sendMSG.toString());
 						}
-						
-						// RPC Call Inovcation Error Response
+
+						// RPC Call Inovcation
 						if (type.equalsIgnoreCase("invoke")){
-							sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
-							.put("message", e).put("callargs", readMSG);
+							System.out.println("invoke");
+							int callid = readMSG.getInt("id");
+							String serviceName = readMSG.getString("app");
+							String methodName = readMSG.getString("method");
+							RPCCallableMethod method = map.get(serviceName).get(methodName);
+							JSONObject retval = method.handleCall(readMSG.getJSONObject("args"));
+
+							// send invoke msg
+							sendMSG.put("callid", callid).put("type", "OK")
+							.put("value", retval);
 							tcpMessageHandler.sendMessage(sendMSG);
+							System.out.println("invoke response sent");
+						}
+
+					} catch (Exception e){
+						// check for sanity
+						if(readMSG != null && !sendMSG.has("type")){
+							String type = readMSG.getString("type");
+
+							// Initial Control Handshake Error Response
+							if (type.equalsIgnoreCase("control")){
+								sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
+								.put("msg", e);
+								try {
+									tcpMessageHandler.sendMessage(sendMSG);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							}
+
+							// RPC Call Inovcation Error Response
+							if (type.equalsIgnoreCase("invoke")){
+								sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
+								.put("message", e).put("callargs", readMSG);
+								try {
+									tcpMessageHandler.sendMessage(sendMSG);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							}
 						}
 					}
-				}
-			} catch (IOException e) {
-				System.out.println("RPC IOException: " + e);
-			} catch (JSONException e) {
-				System.out.println("RPC JSONException: " + e);
+				} catch (SocketTimeoutException e) {
+					// this is normal.  Just loop back and see if we're terminating.
+				} catch (JSONException e) {
+					System.out.println("RPC JSONException: " + e);
+				} 
 			}
+		}catch (Exception e) {
+			Log.w(TAG, "Server thread exiting due to exception: " + e.getMessage());
+		} finally {
+			if ( serverSocket != null )  try { serverSocket.close(); } catch (Exception e) {}
+			serverSocket = null;
 		}
 
 	}
