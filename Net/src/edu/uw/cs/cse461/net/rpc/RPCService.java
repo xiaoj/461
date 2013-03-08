@@ -98,7 +98,6 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 
 						// RPC Call Inovcation
 						//if (type.equalsIgnoreCase("invoke")){
-							System.out.println("invoke");
 							JSONObject readMSG2 = tcpMessageHandler.readMessageAsJSONObject();
 							int callid = readMSG2.getInt("id");
 							String serviceName = readMSG2.getString("app");
