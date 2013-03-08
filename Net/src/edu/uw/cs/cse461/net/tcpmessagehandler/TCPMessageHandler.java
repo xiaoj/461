@@ -218,7 +218,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 	@Override
 	public byte[] readMessageAsBytes() throws IOException {
 		InputStream is = socket.getInputStream();
-System.out.println("readMSGAsBytes");
+
 		// read the length
 		int bufLen;
 		byte[] headerBuf = new byte[4];

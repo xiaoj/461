@@ -49,15 +49,17 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	public RPCService() throws Exception {
 		super("rpc");
-		System.out.println("rpcService constructor");
 		ConfigManager config = NetBase.theNetBase().config();
 		port = config.getAsInt("rpc.server.port", 0);
-		map = new HashMap<String, HashMap<String, RPCCallableMethod>>();
 		String serverIP = IPFinder.localIP();
 		if ( serverIP == null ) throw new Exception("IPFinder isn't providing the local IP address.  Can't run.");
+		
 		serverSocket =  new ServerSocket();
 		serverSocket.bind(new InetSocketAddress(serverIP, port));
 		serverSocket.setSoTimeout( NetBase.theNetBase().config().getAsInt("net.timeout.granularity", 500));
+		
+		map = new HashMap<String, HashMap<String, RPCCallableMethod>>();
+		
 		Thread t = new Thread(this);
 		t.start();
 	}
@@ -84,31 +86,34 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 						tcpMessageHandler.setNoDelay(true);
 
 						readMSG = tcpMessageHandler.readMessageAsJSONObject();
-						String type = readMSG.getString("type");
+						//String type = readMSG.getString("type");
 
 						// Initial Control Handshake
-						if (type.equalsIgnoreCase("control")){
+						//if (type.equalsIgnoreCase("control")){
 							// send response msg
 							sendMSG.put("callid", readMSG.get("id")).put("type", "OK");
 							tcpMessageHandler.sendMessage(sendMSG);
 							System.out.println("connect response sent: "+sendMSG.toString());
-						}
+						//}
 
 						// RPC Call Inovcation
-						if (type.equalsIgnoreCase("invoke")){
+						//if (type.equalsIgnoreCase("invoke")){
 							System.out.println("invoke");
-							int callid = readMSG.getInt("id");
-							String serviceName = readMSG.getString("app");
-							String methodName = readMSG.getString("method");
+							JSONObject readMSG2 = tcpMessageHandler.readMessageAsJSONObject();
+							int callid = readMSG2.getInt("id");
+							String serviceName = readMSG2.getString("app");
+							String methodName = readMSG2.getString("method");
 							RPCCallableMethod method = map.get(serviceName).get(methodName);
-							JSONObject retval = method.handleCall(readMSG.getJSONObject("args"));
-
+							JSONObject retval = method.handleCall(readMSG2.getJSONObject("args"));
+							System.out.println("read invoke msg: "+readMSG2.toString());
 							// send invoke msg
-							sendMSG.put("callid", callid).put("type", "OK")
+							RPCMessage rpcMSG2 = new RPCMessage();
+							JSONObject sendMSG2 = rpcMSG2.marshall();
+							sendMSG2.put("callid", callid).put("type", "OK")
 							.put("value", retval);
-							tcpMessageHandler.sendMessage(sendMSG);
-							System.out.println("invoke response sent");
-						}
+							tcpMessageHandler.sendMessage(sendMSG2);
+							System.out.println("invoke response sent: "+sendMSG2.toString());
+						//}
 
 					} catch (Exception e){
 						// check for sanity
