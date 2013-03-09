@@ -223,6 +223,7 @@ public class TCPMessageHandler implements TCPMessageHandlerInterface {
 		int bufLen;
 		byte[] headerBuf = new byte[4];
 		int len = is.read(headerBuf, 0, 4);
+
 		int payloadLength = byteToInt(headerBuf);
 
 		// use the smaller length between the "length" in the frame and the maxLength
