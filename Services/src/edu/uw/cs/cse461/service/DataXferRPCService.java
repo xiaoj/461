@@ -7,6 +7,7 @@ import edu.uw.cs.cse461.net.base.NetBase;
 import edu.uw.cs.cse461.net.base.NetLoadableInterface.NetLoadableServiceInterface;
 import edu.uw.cs.cse461.net.rpc.RPCCallableMethod;
 import edu.uw.cs.cse461.net.rpc.RPCService;
+import edu.uw.cs.cse461.util.Base64;
 import edu.uw.cs.cse461.util.ConfigManager;
 import edu.uw.cs.cse461.util.IPFinder;
 
@@ -59,8 +60,22 @@ public class DataXferRPCService extends DataXferServiceBase implements NetLoadab
 			throw new Exception("Missing or incorrect header value: '" + header + "'");
 		
 		// To-do: some dataxfer work here, not echo
+		int xferLength = header.getInt("xferLength");
+		JSONObject retVal = new JSONObject();
+		JSONObject retHeader = new JSONObject();
 		
-		return null;
+		retHeader.put(HEADER_TAG_KEY, RESPONSE_OKAY_STR).put(HEADER_XFERLENGTH_KEY, xferLength);
+		retVal.put(HEADER_KEY, retHeader);
+		
+		String msg = "!";
+		byte[] buf = new byte[xferLength];
+		// copy the msg i times into buf until buf is full (PACKET_SIZE = 1000 bytes)
+		for (int i = 0; i < xferLength; i++){
+			System.arraycopy(msg.getBytes(), 0, buf, i, msg.getBytes().length);
+		}
+		
+		retVal.put("data", Base64.encodeBytes(buf));	
+		return retVal;
 	}
 	
 }
