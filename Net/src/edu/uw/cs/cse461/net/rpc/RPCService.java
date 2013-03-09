@@ -88,9 +88,19 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 						readMSG = tcpMessageHandler.readMessageAsJSONObject();
 						//String type = readMSG.getString("type");
 
+						
 						// Initial Control Handshake
 						//if (type.equalsIgnoreCase("control")){
 							// send response msg
+						if (readMSG.has("options")){
+							JSONObject options = readMSG.getJSONObject("options");
+							if (options.has("connection")){
+								String connection = options.getString("connection");
+								if (connection.equalsIgnoreCase("keep-alive")){
+									sendMSG.put("value", options);
+								}
+							}
+						}
 							sendMSG.put("callid", readMSG.get("id")).put("type", "OK");
 							tcpMessageHandler.sendMessage(sendMSG);
 							System.out.println("connect response sent: "+sendMSG.toString());
