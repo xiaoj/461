@@ -34,7 +34,7 @@ import edu.uw.cs.cse461.util.Log;
  */
 public class RPCCall extends NetLoadableService {
 	private static final String TAG="RPCCall";
-
+	private HashMap<HashMap<String, Integer>, Socket> cache;
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	// The static versions of invoke() are just a convenience for caller's -- it
@@ -90,6 +90,7 @@ public class RPCCall extends NetLoadableService {
 	 */
 	public RPCCall() {
 		super("rpccall");
+		cache = new HashMap<HashMap<String, Integer>, Socket>();
 	}
 
 	/**
@@ -138,7 +139,7 @@ public class RPCCall extends NetLoadableService {
 		String type = connectResponse.getString("type");
 		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
 			throw new Exception("Bad connect response: '" + connectResponse.getString("msg") + "'");
-		System.out.println("connect response: "+connectResponse.toString());
+		
 		/* RPC Invocation */
 		// send invoke msg
 		RPCMessage rpcInvoke = new RPCMessage();
@@ -149,10 +150,9 @@ public class RPCCall extends NetLoadableService {
 	
 		RPCMessage invokeMSG = RPCMessage.unmarshall(jsonInvoke.toString());
 		tcpMessageHandlerSocket.sendMessage(invokeMSG.marshall());
-		System.out.println("invoke msg sent");
+		
 		// read response invocation msg
 		JSONObject invokeResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
-		System.out.println("invoke response " + invokeResponse.toString());
 		type = invokeResponse.getString("type");
 		
 		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id() || !invokeResponse.has("value"))

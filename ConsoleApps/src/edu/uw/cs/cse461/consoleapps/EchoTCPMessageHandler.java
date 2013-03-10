@@ -71,7 +71,6 @@ public class EchoTCPMessageHandler extends NetLoadableConsoleApp {
 					String response = tcpMessageHandlerSocket.readMessageAsString();
 					if ( !  response.equals(msg))
 						throw new Exception("Bad response payload: sent '" + msg + "' got back '" + response + "'");
-					System.out.println(response);
 				} catch (SocketTimeoutException e) {
 					System.out.println("Timed out");
 				} catch (Exception e) {

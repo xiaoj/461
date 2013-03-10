@@ -4,14 +4,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.net.base.NetBase;
-import edu.uw.cs.cse461.net.base.NetLoadableInterface.NetLoadableServiceInterface;
 import edu.uw.cs.cse461.net.rpc.RPCCallableMethod;
 import edu.uw.cs.cse461.net.rpc.RPCService;
 import edu.uw.cs.cse461.util.Base64;
-import edu.uw.cs.cse461.util.ConfigManager;
-import edu.uw.cs.cse461.util.IPFinder;
 
-public class DataXferRPCService extends DataXferServiceBase implements NetLoadableServiceInterface{
+public class DataXferRPCService extends DataXferServiceBase{
 
 	public static final String HEADER_KEY = "header";
 	public static final String HEADER_TAG_VALUE = "xfer";
@@ -19,7 +16,7 @@ public class DataXferRPCService extends DataXferServiceBase implements NetLoadab
 	public static final String HEADER_XFERLENGTH_KEY = "xferLength";
 	
 	// A variable capable of describing a method that can be invoked by RPC.
-	private RPCCallableMethod dataxferrpc;
+	private RPCCallableMethod dataxfer;
 	
 	public DataXferRPCService() throws Exception {
 		super("dataxferrpc");
@@ -28,18 +25,11 @@ public class DataXferRPCService extends DataXferServiceBase implements NetLoadab
 		if ( HEADER_STR.length() != RESPONSE_OKAY_STR.length() )
 			throw new Exception("Header and response strings must be same length: '" + HEADER_STR + "' '" + RESPONSE_OKAY_STR + "'");	
 
-		String serverIP = IPFinder.localIP();
-		if ( serverIP == null ) throw new Exception("IPFinder isn't providing the local IP address.  Can't run.");
-
-		// get the base port
-		ConfigManager config = NetBase.theNetBase().config();
-		int port = config.getAsInt("dataxferraw.server.baseport", 0);
-		if ( port == 0 ) throw new RuntimeException("dataxferraw service can't run -- no dataxferraw.server.baseport entry in config file");
-		
-		// Set up the method descriptor variable to refer to this->_dataxferrpc()
-		dataxferrpc = new RPCCallableMethod(this, "_dataxferrpc");
+		// Set up the method descriptor variable to refer to this->dataxfer()
+		dataxfer = new RPCCallableMethod(this, "_dataxfer");
 		// Register the method with the RPC service as externally invocable method "dataxferrpc"
-		((RPCService)NetBase.theNetBase().getService("rpc")).registerHandler(loadablename(), "dataxferrpc", dataxferrpc );		
+		//((RPCService)NetBase.theNetBase().getService("rpc")).registerHandler(loadablename(), "dataxferrpc", dataxfer );
+		((RPCService)NetBase.theNetBase().getService("rpc")).registerHandler(loadablename(), "dataxfer", dataxfer );
 	}
 	
 	/**
@@ -52,8 +42,7 @@ public class DataXferRPCService extends DataXferServiceBase implements NetLoadab
 	 * @return
 	 * @throws JSONException
 	 */
-	public JSONObject _dataxferrpc(JSONObject args) throws Exception {
-		
+	public JSONObject _dataxfer(JSONObject args) throws Exception {
 		// check header
 		JSONObject header = args.getJSONObject(HEADER_KEY);
 		if ( header == null  || !header.has(HEADER_TAG_KEY) || !header.getString(HEADER_TAG_KEY).equalsIgnoreCase(HEADER_STR) )
