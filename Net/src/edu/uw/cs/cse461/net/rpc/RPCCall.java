@@ -34,7 +34,11 @@ import edu.uw.cs.cse461.util.Log;
  */
 public class RPCCall extends NetLoadableService {
 	private static final String TAG="RPCCall";
-	private HashMap<HashMap<String, Integer>, Socket> cache;
+	
+	// a cache for persistent connection
+	private HashMap<HashMap<String, Integer>, Socket> socketCache;
+	
+	private long startTime;
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	// The static versions of invoke() are just a convenience for caller's -- it
@@ -90,7 +94,8 @@ public class RPCCall extends NetLoadableService {
 	 */
 	public RPCCall() {
 		super("rpccall");
-		cache = new HashMap<HashMap<String, Integer>, Socket>();
+		socketCache = new HashMap<HashMap<String, Integer>, Socket>();
+		startTime = System.currentTimeMillis();
 	}
 
 	/**
@@ -117,9 +122,15 @@ public class RPCCall extends NetLoadableService {
 			int socketTimeout,        // max time to wait for reply
 			boolean tryAgain          // true if an invocation failure on a persistent connection should cause a re-try of the call, false to give up
 			) throws Exception {
-		
-		Socket tcpSocket =  new Socket(ip, port);
-		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(tcpSocket);
+		HashMap<String, Integer> key = new HashMap<String, Integer>();
+		key.put(ip, port);
+		Socket socket =  socketCache.get(key);
+		if (socket == null){
+			socket = new Socket(ip, port);
+			socketCache.put(key, socket);
+		}
+		System.out.println("socket info: "+socket.getRemoteSocketAddress());
+		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
 		tcpMessageHandlerSocket.setTimeout(socketTimeout);
 		tcpMessageHandlerSocket.setNoDelay(true);
 		
@@ -157,9 +168,9 @@ public class RPCCall extends NetLoadableService {
 		
 		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id() || !invokeResponse.has("value"))
 			throw new Exception("Bad invoke response");
-		
+	
 		// ????????????? close socket, persistent connection, cache
-		tcpMessageHandlerSocket.close();
+		//tcpMessageHandlerSocket.close();
 		return invokeResponse.getJSONObject("value");
 	}
 	
