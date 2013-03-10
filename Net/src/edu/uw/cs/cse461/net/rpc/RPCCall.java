@@ -39,6 +39,7 @@ public class RPCCall extends NetLoadableService {
 	private HashMap<HashMap<String, Integer>, Socket> socketCache;
 	
 	private long startTime;
+	
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	// The static versions of invoke() are just a convenience for caller's -- it
@@ -173,6 +174,12 @@ public class RPCCall extends NetLoadableService {
 	
 		// ????????????? close socket, persistent connection, cache
 		//tcpMessageHandlerSocket.close();
+		
+		//if initially the header send to service without requiring persistent connection
+		//close socket here
+		if (!option.getString("connection").equalsIgnoreCase("keep-alive")){
+			socket.close();
+		}
 		return invokeResponse.getJSONObject("value");
 	}
 	
