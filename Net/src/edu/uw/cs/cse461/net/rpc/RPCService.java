@@ -45,6 +45,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		if ( serverIP == null ) throw new Exception("IPFinder isn't providing the local IP address.  Can't run.");
 		
 		serverSocket =  new ServerSocket();
+		//serverSocket.setReuseAddress(true);
 		serverSocket.bind(new InetSocketAddress(serverIP, port));
 		serverSocket.setSoTimeout( NetBase.theNetBase().config().getAsInt("net.timeout.granularity", 500));
 		
@@ -60,77 +61,82 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	 */
 	@Override
 	public void run() {
+		Socket socket = null;
 		try {
 			while ( !mAmShutdown ) {
-				Socket socket = null;
 				try {
-					socket = serverSocket.accept();
-					TCPMessageHandler tcpMessageHandler = null;
-					RPCMessage rpcMSG = new RPCMessage();
-					JSONObject sendMSG = rpcMSG.marshall();
-					JSONObject readMSG = null;
+					
+					if (socket == null){
+						socket = serverSocket.accept();
+						
+					}else{
+						TCPMessageHandler tcpMessageHandler = null;
+						RPCMessage rpcMSG = new RPCMessage();
+						JSONObject sendMSG = rpcMSG.marshall();
+						JSONObject readMSG = null;
 
-					try {
-						tcpMessageHandler = new TCPMessageHandler(socket);
-						tcpMessageHandler.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
-						tcpMessageHandler.setNoDelay(true);
+						try {
+							tcpMessageHandler = new TCPMessageHandler(socket);
+							tcpMessageHandler.setTimeout(NetBase.theNetBase().config().getAsInt("net.timeout.socket", 5000));
+							tcpMessageHandler.setNoDelay(true);
 
-						readMSG = tcpMessageHandler.readMessageAsJSONObject();
+							readMSG = tcpMessageHandler.readMessageAsJSONObject();
 
-						// Initial Control Handshake
-						// send response msg
-						if (readMSG.has("options")){
-							JSONObject options = readMSG.getJSONObject("options");
-							if (options.has("connection")){
-								String connection = options.getString("connection");
-								if (connection.equalsIgnoreCase("keep-alive")){
-									sendMSG.put("value", options);
+							// Initial Control Handshake
+							// send response msg
+							if (readMSG.has("options")){
+								JSONObject options = readMSG.getJSONObject("options");
+								if (options.has("connection")){
+									String connection = options.getString("connection");
+									if (connection.equalsIgnoreCase("keep-alive")){
+										sendMSG.put("value", options);
+									}
 								}
 							}
-						}
-						sendMSG.put("callid", readMSG.get("id")).put("type", "OK");
-						tcpMessageHandler.sendMessage(sendMSG);
-						// RPC Call Inovcation
+							sendMSG.put("callid", readMSG.get("id")).put("type", "OK");
+							tcpMessageHandler.sendMessage(sendMSG);
+							// RPC Call Inovcation
 
-						JSONObject readMSG2 = tcpMessageHandler.readMessageAsJSONObject();
-						int callid = readMSG2.getInt("id");
-						String serviceName = readMSG2.getString("app");
-						String methodName = readMSG2.getString("method");
+							JSONObject readMSG2 = tcpMessageHandler.readMessageAsJSONObject();
+							int callid = readMSG2.getInt("id");
+							String serviceName = readMSG2.getString("app");
+							String methodName = readMSG2.getString("method");
 
-						RPCCallableMethod method = map.get(serviceName).get(methodName);
-						JSONObject retval = method.handleCall(readMSG2.getJSONObject("args"));
+							RPCCallableMethod method = map.get(serviceName).get(methodName);
+							JSONObject retval = method.handleCall(readMSG2.getJSONObject("args"));
 
-						// send invoke msg
-						RPCMessage rpcMSG2 = new RPCMessage();
-						JSONObject sendMSG2 = rpcMSG2.marshall();
-						sendMSG2.put("callid", callid).put("type", "OK")
-						.put("value", retval);
-						tcpMessageHandler.sendMessage(sendMSG2);
+							// send invoke msg
+							RPCMessage rpcMSG2 = new RPCMessage();
+							JSONObject sendMSG2 = rpcMSG2.marshall();
+							sendMSG2.put("callid", callid).put("type", "OK")
+							.put("value", retval);
+							tcpMessageHandler.sendMessage(sendMSG2);
 
-					} catch (Exception e){
-						// check for sanity
-						if(readMSG != null && !sendMSG.has("type")){
-							String type = readMSG.getString("type");
+						} catch (Exception e){
+							// check for sanity
+							if(readMSG != null && !sendMSG.has("type")){
+								String type = readMSG.getString("type");
 
-							// Initial Control Handshake Error Response
-							if (type.equalsIgnoreCase("control")){
-								sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
-								.put("msg", e);
-								try {
-									tcpMessageHandler.sendMessage(sendMSG);
-								} catch (IOException e1) {
-									e1.printStackTrace();
+								// Initial Control Handshake Error Response
+								if (type.equalsIgnoreCase("control")){
+									sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
+									.put("msg", e);
+									try {
+										tcpMessageHandler.sendMessage(sendMSG);
+									} catch (IOException e1) {
+										e1.printStackTrace();
+									}
 								}
-							}
 
-							// RPC Call Inovcation Error Response
-							if (type.equalsIgnoreCase("invoke")){
-								sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
-								.put("message", e).put("callargs", readMSG);
-								try {
-									tcpMessageHandler.sendMessage(sendMSG);
-								} catch (IOException e1) {
-									e1.printStackTrace();
+								// RPC Call Inovcation Error Response
+								if (type.equalsIgnoreCase("invoke")){
+									sendMSG.put("callid", readMSG.get("id")).put("type", "ERROR")
+									.put("message", e).put("callargs", readMSG);
+									try {
+										tcpMessageHandler.sendMessage(sendMSG);
+									} catch (IOException e1) {
+										e1.printStackTrace();
+									}
 								}
 							}
 						}
