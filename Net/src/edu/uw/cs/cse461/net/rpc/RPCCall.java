@@ -127,9 +127,11 @@ public class RPCCall extends NetLoadableService {
 		Socket socket =  socketCache.get(key);
 		if (socket == null){
 			socket = new Socket(ip, port);
+			socket.setKeepAlive(true);
+			socket.setReuseAddress(true);
 			socketCache.put(key, socket);
 		}
-		System.out.println("socket info: "+socket.getRemoteSocketAddress());    
+
 		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
 		tcpMessageHandlerSocket.setTimeout(socketTimeout);
 		tcpMessageHandlerSocket.setNoDelay(true);
