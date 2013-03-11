@@ -37,8 +37,9 @@ public class RPCCall extends NetLoadableService {
 	
 	// a cache for persistent connection
 	private HashMap<HashMap<String, Integer>, Socket> socketCache;
-	
+
 	private Timer timer;
+
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	// The static versions of invoke() are just a convenience for caller's -- it
@@ -131,7 +132,7 @@ public class RPCCall extends NetLoadableService {
 			socket.setReuseAddress(true);
 			socketCache.put(key, socket);
 		}
-		
+
 		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
 		tcpMessageHandlerSocket.setTimeout(socketTimeout);
 		tcpMessageHandlerSocket.setNoDelay(true);
@@ -173,6 +174,12 @@ public class RPCCall extends NetLoadableService {
 	
 		// ????????????? close socket, persistent connection, cache
 		//tcpMessageHandlerSocket.close();
+		
+		//if initially the header send to service without requiring persistent connection
+		//close socket here
+		if (!option.getString("connection").equalsIgnoreCase("keep-alive")){
+			socket.close();
+		}
 		return invokeResponse.getJSONObject("value");
 	}
 	
