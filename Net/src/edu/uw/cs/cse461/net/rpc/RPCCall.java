@@ -38,7 +38,7 @@ public class RPCCall extends NetLoadableService {
 	// a cache for persistent connection
 	private HashMap<HashMap<String, Integer>, Socket> socketCache;
 	
-	private long startTime;
+	private Timer timer;
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	// The static versions of invoke() are just a convenience for caller's -- it
@@ -95,7 +95,7 @@ public class RPCCall extends NetLoadableService {
 	public RPCCall() {
 		super("rpccall");
 		socketCache = new HashMap<HashMap<String, Integer>, Socket>();
-		startTime = System.currentTimeMillis();
+		timer = new Timer();
 	}
 
 	/**

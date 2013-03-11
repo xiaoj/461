@@ -45,7 +45,7 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 		if ( serverIP == null ) throw new Exception("IPFinder isn't providing the local IP address.  Can't run.");
 		
 		serverSocket =  new ServerSocket();
-		//serverSocket.setReuseAddress(true);
+		serverSocket.setReuseAddress(true);
 		serverSocket.bind(new InetSocketAddress(serverIP, port));
 		serverSocket.setSoTimeout( NetBase.theNetBase().config().getAsInt("net.timeout.granularity", 500));
 		
@@ -62,10 +62,11 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 	@Override
 	public void run() {
 		Socket socket = null;
+		boolean persistentConnection = false;
 		try {
 			while ( !mAmShutdown ) {
+				
 				try {
-					
 					if (socket == null){
 						socket = serverSocket.accept();
 						
@@ -88,7 +89,8 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 								JSONObject options = readMSG.getJSONObject("options");
 								if (options.has("connection")){
 									String connection = options.getString("connection");
-									if (connection.equalsIgnoreCase("keep-alive")){
+									persistentConnection = connection.equalsIgnoreCase("keep-alive");
+									if (persistentConnection){
 										sendMSG.put("value", options);
 									}
 								}
@@ -138,6 +140,10 @@ public class RPCService extends NetLoadableService implements Runnable, RPCServi
 										e1.printStackTrace();
 									}
 								}
+							}
+						} finally {
+							if ( socket != null && !persistentConnection){ 
+								try { socket.close(); socket = null;} catch (Exception e) {}
 							}
 						}
 					}
