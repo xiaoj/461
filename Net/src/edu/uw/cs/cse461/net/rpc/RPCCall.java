@@ -178,6 +178,7 @@ public class RPCCall extends NetLoadableService {
 		//if initially the header send to service without requiring persistent connection
 		//close socket here
 		if (!option.getString("connection").equalsIgnoreCase("keep-alive")){
+			System.out.println("It should not reach here, since we always want persistent connection!");
 			socket.close();
 		}
 		return invokeResponse.getJSONObject("value");
