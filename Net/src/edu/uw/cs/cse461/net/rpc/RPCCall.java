@@ -35,11 +35,14 @@ import edu.uw.cs.cse461.util.Log;
 public class RPCCall extends NetLoadableService {
 	private static final String TAG="RPCCall";
 	private static final String connection = "keep-alive";
+	private static final long DELAY = 300000; //5 minutes
+	
 	// a cache for persistent connection
 	private HashMap<HashMap<String, Integer>, Socket> socketCache;
 
 	boolean persistentConnection;
 	private Timer timer;
+	
 
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
@@ -97,6 +100,7 @@ public class RPCCall extends NetLoadableService {
 	public RPCCall() {
 		super("rpccall");
 		socketCache = new HashMap<HashMap<String, Integer>, Socket>();
+		//set a new timer and set delay for 5 minutes
 		timer = new Timer();
 		persistentConnection = false;
 	}
@@ -186,6 +190,33 @@ public class RPCCall extends NetLoadableService {
 		if (!persistentConnection){
 			socket.close();
 		}
+		
+		class Task extends TimerTask {
+
+			@Override
+			public void run() {
+				//remove all the mapping in socketcache
+				for(HashMap<String, Integer> key: socketCache.keySet()){
+					for(String s: key.keySet()){
+						key.remove(s);
+					}
+					socketCache.remove(key);
+				}
+			}	
+		}
+		
+		try {
+			timer.schedule(new Task(), DELAY);
+		}catch (IllegalStateException e){ 
+			//if task was already scheduled or cancelled, timer was cancelled or timer thread terminated
+			timer.cancel();
+			timer = new Timer();
+			timer.schedule(new Task(), DELAY);
+		}catch(IllegalArgumentException e){
+			//if DELAY is negative
+			e.printStackTrace();
+		}
+		
 		return invokeResponse.getJSONObject("value");
 	}
 	
