@@ -35,7 +35,10 @@ import edu.uw.cs.cse461.util.Log;
 public class RPCCall extends NetLoadableService {
 	private static final String TAG="RPCCall";
 	private static final String connection = "keep-alive";
-	private static final long DELAY = 300000; //5 minutes
+	//private static final long DELAY = 300000; //5 minutes
+	private static final long DELAY = 20000; //for testing purpose 
+	
+	//private Task cleanCache;
 	
 	// a cache for persistent connection
 	private HashMap<HashMap<String, Integer>, Socket> socketCache;
@@ -190,31 +193,9 @@ public class RPCCall extends NetLoadableService {
 			socket.close();
 		}
 		
-		class Task extends TimerTask {
-
-			@Override
-			public void run() {
-				//remove all the mapping in socketcache
-				for(HashMap<String, Integer> key: socketCache.keySet()){
-					for(String s: key.keySet()){
-						key.remove(s);
-					}
-					socketCache.remove(key);
-				}
-			}	
-		}
-		
-		try {
-			timer.schedule(new Task(), DELAY);
-		}catch (IllegalStateException e){ 
-			//if task was already scheduled or cancelled, timer was cancelled or timer thread terminated
-			timer.cancel();
-			timer = new Timer();
-			timer.schedule(new Task(), DELAY);
-		}catch(IllegalArgumentException e){
-			//if DELAY is negative
-			e.printStackTrace();
-		}
+		timer.cancel();
+		timer = new Timer();
+		timer.schedule(new Task(), DELAY);
 		
 		return invokeResponse.getJSONObject("value");
 	}
@@ -227,5 +208,19 @@ public class RPCCall extends NetLoadableService {
 	@Override
 	public String dumpState() {
 		return "Current persistent connections are ...";
+	}
+	
+	class Task extends TimerTask {
+
+		@Override
+		public void run() {
+			//remove all the mapping in socketcache
+			for(HashMap<String, Integer> key: socketCache.keySet()){
+				for(String s: key.keySet()){
+					key.remove(s);
+				}
+				socketCache.remove(key);
+			}
+		}	
 	}
 }
