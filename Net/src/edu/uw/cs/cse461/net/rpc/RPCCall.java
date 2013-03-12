@@ -124,12 +124,12 @@ public class RPCCall extends NetLoadableService {
 			JSONObject userRequest,   // arguments to send to remote method
 			int socketTimeout,        // max time to wait for reply
 			boolean tryAgain          // true if an invocation failure on a persistent connection should cause a re-try of the call, false to give up
-			) throws Exception {
+	) throws Exception {
 		HashMap<String, Integer> key = new HashMap<String, Integer>();
 		key.put(ip, port);
 		Socket socket =  socketCache.get(key);
 		boolean firstConnect = false;
-		
+
 		if (socket == null){
 			firstConnect = true;
 			socket = new Socket(ip, port);
@@ -141,45 +141,44 @@ public class RPCCall extends NetLoadableService {
 		TCPMessageHandler tcpMessageHandlerSocket = new TCPMessageHandler(socket);
 		tcpMessageHandlerSocket.setTimeout(socketTimeout);
 		tcpMessageHandlerSocket.setNoDelay(true);
-		
+
 		/* Initial control handshake: calling RPC service */
 		if (firstConnect){
-		// send connect msg
-		JSONObject option = new JSONObject().put("connection", connection);
-		RPCMessage rpcConnect = new RPCMessage();
-		JSONObject jsonConnect = rpcConnect.marshall();
-		jsonConnect.put("action", "connect").put("type", "control").put("options", option);
-		persistentConnection = option.getString("connection").equalsIgnoreCase("keep-alive");
-		RPCMessage connectMSG = RPCMessage.unmarshall(jsonConnect.toString());
-		tcpMessageHandlerSocket.sendMessage(connectMSG.marshall());
+			// send connect msg
+			JSONObject option = new JSONObject().put("connection", connection);
+			RPCMessage rpcConnect = new RPCMessage();
+			JSONObject jsonConnect = rpcConnect.marshall();
+			jsonConnect.put("action", "connect").put("type", "control").put("options", option);
+			persistentConnection = option.getString("connection").equalsIgnoreCase("keep-alive");
+			RPCMessage connectMSG = RPCMessage.unmarshall(jsonConnect.toString());
+			tcpMessageHandlerSocket.sendMessage(connectMSG.marshall());
 
-		// read response msg
-		JSONObject connectResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
-		System.out.println("connect response: "+connectResponse.toString());
-		int callid = connectResponse.getInt("callid");
-		String type = connectResponse.getString("type");
-		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id()){
-			throw new Exception("Bad connect response: '"  + "'");
-		}
+			// read response msg
+			JSONObject connectResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
+			int callid = connectResponse.getInt("callid");
+			String type = connectResponse.getString("type");
+			if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id()){
+				throw new Exception("Bad connect response: '"  + "'");
+			}
 		}
 		/* RPC Invocation */
 		// send invoke msg
 		RPCMessage rpcInvoke = new RPCMessage();
 		JSONObject jsonInvoke = rpcInvoke.marshall();
-		
+
 		jsonInvoke.put("app", serviceName).put("args", userRequest)
-					.put("type", "invoke").put("method", method);
-	
+		.put("type", "invoke").put("method", method);
+
 		RPCMessage invokeMSG = RPCMessage.unmarshall(jsonInvoke.toString());
 		tcpMessageHandlerSocket.sendMessage(invokeMSG.marshall());
-		
+
 		// read response invocation msg
 		JSONObject invokeResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
 		String type = invokeResponse.getString("type");
 		int callid = invokeResponse.getInt("callid");
 		if ( ! type.equalsIgnoreCase("OK") || callid != invokeMSG.id() || !invokeResponse.has("value"))
 			throw new Exception("Bad invoke response");
-	
+
 		//if initially the header send to service without requiring persistent connection
 		//close socket here
 		if (!persistentConnection){
