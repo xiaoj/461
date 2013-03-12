@@ -34,12 +34,13 @@ import edu.uw.cs.cse461.util.Log;
  */
 public class RPCCall extends NetLoadableService {
 	private static final String TAG="RPCCall";
-	
+	private static final String connection = "keep-alive";
 	// a cache for persistent connection
 	private HashMap<HashMap<String, Integer>, Socket> socketCache;
-	
-	private long startTime;
-	
+
+	boolean persistentConnection;
+	private Timer timer;
+
 	//-------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------
 	// The static versions of invoke() are just a convenience for caller's -- it
@@ -96,7 +97,8 @@ public class RPCCall extends NetLoadableService {
 	public RPCCall() {
 		super("rpccall");
 		socketCache = new HashMap<HashMap<String, Integer>, Socket>();
-		startTime = System.currentTimeMillis();
+		timer = new Timer();
+		persistentConnection = false;
 	}
 
 	/**
@@ -126,7 +128,10 @@ public class RPCCall extends NetLoadableService {
 		HashMap<String, Integer> key = new HashMap<String, Integer>();
 		key.put(ip, port);
 		Socket socket =  socketCache.get(key);
+		boolean firstConnect = false;
+		
 		if (socket == null){
+			firstConnect = true;
 			socket = new Socket(ip, port);
 			socket.setKeepAlive(true);
 			socket.setReuseAddress(true);
@@ -138,22 +143,25 @@ public class RPCCall extends NetLoadableService {
 		tcpMessageHandlerSocket.setNoDelay(true);
 		
 		/* Initial control handshake: calling RPC service */
+		if (firstConnect){
 		// send connect msg
-		JSONObject option = new JSONObject().put("connection", "keep-alive");
+		JSONObject option = new JSONObject().put("connection", connection);
 		RPCMessage rpcConnect = new RPCMessage();
 		JSONObject jsonConnect = rpcConnect.marshall();
 		jsonConnect.put("action", "connect").put("type", "control").put("options", option);
-		
+		persistentConnection = option.getString("connection").equalsIgnoreCase("keep-alive");
 		RPCMessage connectMSG = RPCMessage.unmarshall(jsonConnect.toString());
 		tcpMessageHandlerSocket.sendMessage(connectMSG.marshall());
 
 		// read response msg
 		JSONObject connectResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
+		System.out.println("connect response: "+connectResponse.toString());
 		int callid = connectResponse.getInt("callid");
 		String type = connectResponse.getString("type");
-		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id())
-			throw new Exception("Bad connect response: '" + connectResponse.getString("msg") + "'");
-		
+		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id()){
+			throw new Exception("Bad connect response: '"  + "'");
+		}
+		}
 		/* RPC Invocation */
 		// send invoke msg
 		RPCMessage rpcInvoke = new RPCMessage();
@@ -167,18 +175,15 @@ public class RPCCall extends NetLoadableService {
 		
 		// read response invocation msg
 		JSONObject invokeResponse = tcpMessageHandlerSocket.readMessageAsJSONObject();
-		type = invokeResponse.getString("type");
-		
-		if ( ! type.equalsIgnoreCase("OK") || callid != connectMSG.id() || !invokeResponse.has("value"))
+		String type = invokeResponse.getString("type");
+		int callid = invokeResponse.getInt("callid");
+		if ( ! type.equalsIgnoreCase("OK") || callid != invokeMSG.id() || !invokeResponse.has("value"))
 			throw new Exception("Bad invoke response");
 	
-		// ????????????? close socket, persistent connection, cache
-		//tcpMessageHandlerSocket.close();
-		
 		//if initially the header send to service without requiring persistent connection
 		//close socket here
-		if (!option.getString("connection").equalsIgnoreCase("keep-alive")){
-			System.out.println("It should not reach here, since we always want persistent connection!");
+
+		if (!persistentConnection){
 			socket.close();
 		}
 		return invokeResponse.getJSONObject("value");
