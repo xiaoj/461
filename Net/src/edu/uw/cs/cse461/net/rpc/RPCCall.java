@@ -35,8 +35,7 @@ import edu.uw.cs.cse461.util.Log;
 public class RPCCall extends NetLoadableService {
 	private static final String TAG="RPCCall";
 	private static final String connection = "keep-alive";
-	//private static final long DELAY = 300000; //5 minutes
-	private static final long DELAY = 20000; //for testing purpose 
+	private static final long DELAY = 300000; // 5 minute -- when to clean the cache
 	
 	//private Task cleanCache;
 	
@@ -136,6 +135,9 @@ public class RPCCall extends NetLoadableService {
 		key.put(ip, port);
 		Socket socket =  socketCache.get(key);
 		boolean firstConnect = false;
+		
+		//stop current timer once _invoke is called
+		timer.cancel();
 
 		if (socket == null){
 			firstConnect = true;
@@ -193,7 +195,6 @@ public class RPCCall extends NetLoadableService {
 			socket.close();
 		}
 		
-		timer.cancel();
 		timer = new Timer();
 		timer.schedule(new Task(), DELAY);
 		
@@ -210,6 +211,9 @@ public class RPCCall extends NetLoadableService {
 		return "Current persistent connections are ...";
 	}
 	
+	/*
+	 * clean cache -- mapping from (ip, port) --> (socket) 
+	 */
 	class Task extends TimerTask {
 
 		@Override
