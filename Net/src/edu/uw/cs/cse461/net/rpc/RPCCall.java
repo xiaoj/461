@@ -170,7 +170,6 @@ public class RPCCall extends NetLoadableService {
 				throw new Exception("Bad connect response: '"  + "'");
 			}
 		}
-		
 		/* RPC Invocation */
 		// send invoke msg
 		RPCMessage rpcInvoke = new RPCMessage();
